@@ -23,6 +23,11 @@ Two to four real groups planning **upcoming** trips, with at least one group of 
 5. After the trip, optionally publish it.
 6. Bonus: someone tries "Forgot my link" on another device.
 
+## Known issues going into the pilot
+
+- **Beaches rarely appear among suggested places** (decided 2026-10-17 to leave for now). Geoapify returns them (e.g. 4 for Chennai, 2 for Mumbai), but a beach without a Wikipedia/Wikidata entry scores below the many vaguely tagged "attractions" such as roadside statues, so it misses the top 30. Notable large parks (e.g. Guindy National Park) can also be missing, because cities have hundreds of parks and Geoapify returns them in no useful order. Proposed fix when we pick it up: weight beaches 6, give vaguely tagged items the lowest weight, request `national_park` separately, and log a category breakdown to tune from real data. Users can still type any place into a day.
+- **Organiser-link emails only reach the Resend account owner** until a domain is verified and `EMAIL_FROM` is switched (docs/deployment.md, step 3).
+
 ## What to measure (goal-spec §11)
 
 Run these read-only queries in the Neon SQL editor.

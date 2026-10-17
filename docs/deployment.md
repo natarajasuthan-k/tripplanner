@@ -6,7 +6,7 @@ How to take Trip Planner from this repository to a live, free-tier deployment (g
  Browser ──► Cloudflare Worker (web, static assets) tripplanner.<you>.workers.dev
     │
     └─────► Cloudflare Workers (API)                tripplanner-api.<you>.workers.dev
-               ├─► Neon (Postgres 17)
+               ├─► Neon (Postgres 18)
                ├─► Geoapify (destinations, places)
                └─► Resend (organiser-link emails)
 
@@ -21,7 +21,8 @@ Everything below costs **$0** on the free plans. Check the current free-plan lim
 
 ## 1. Neon (database)
 
-1. Create a Neon account and a project. Choose **Postgres 17** and the region closest to your users, e.g. _Asia Pacific (Singapore)_ for India.
+1. Create a Neon account and a project. The default Postgres version (18 at the time of writing) is fine. Choose the region closest to your users, e.g. _Asia Pacific (Singapore)_ for India.
+   - Local development and CI use Postgres 17 in Docker. The schema works on both. The Backup workflow installs whichever `pg_dump` matches the server.
 2. Copy the connection string for the default database. It looks like `postgres://USER:PASSWORD@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`.
 3. Keep it safe. It is used as the `DATABASE_URL` secret in steps 5 and 6.
 
