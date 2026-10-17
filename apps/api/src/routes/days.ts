@@ -11,6 +11,7 @@ import { sessionIdOf } from '../lib/http';
 import { validationHook } from '../lib/validation';
 import { rateLimit } from '../middleware/rateLimit';
 import { requireRole, tripDay } from '../middleware/tripAccess';
+import { recordContribution } from '../services/contributorService';
 import { heartbeat, saveDay, stopEditing } from '../services/dayService';
 import { errorResponse, tokenDayParams } from './common';
 
@@ -85,13 +86,9 @@ const stopRoute = createRoute({
 export function dayRoutes() {
   return new OpenAPIHono<AppBindings>({ defaultHook: validationHook })
     .openapi(saveRoute, async (c) => {
-      const day = await saveDay(
-        c.var.db,
-        c.var.trip,
-        c.var.day,
-        c.req.valid('json'),
-        sessionIdOf(c),
-      );
+      const input = c.req.valid('json');
+      const day = await saveDay(c.var.db, c.var.trip, c.var.day, input, sessionIdOf(c));
+      await recordContribution(c.var.db, c.env.EMAIL_HMAC_SECRET, c.var.trip.id, input.editorName);
       return c.json({ day }, 200);
     })
     .openapi(presenceRoute, async (c) => {

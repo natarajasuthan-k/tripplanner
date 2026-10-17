@@ -120,7 +120,7 @@ const TRIPS: SeedTrip[] = [
 export async function seed(db: Db): Promise<void> {
   await db.execute(
     sql`TRUNCATE destinations, trips, days, day_presence, delete_requests, provider_cache,
-        trip_slug_history, rate_counters RESTART IDENTITY CASCADE`,
+        trip_slug_history, rate_counters, trip_contributors RESTART IDENTITY CASCADE`,
   );
   const destinations = await upsertDestinations(db, 'fake', DESTINATIONS);
   const today = todayAoE();

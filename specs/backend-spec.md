@@ -152,11 +152,22 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 | count | integer | not null | |
 | expires_at | timestamptz | not null, indexed | |
 
+### 3.9 `trip_contributors` (goal Q25)
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| trip_id | uuid | FK → trips ON DELETE CASCADE | |
+| contributor_hash | text | not null | HMAC-SHA256(`EMAIL_HMAC_SECRET`, `"contributor:" + trip_id + ":" + lower(display name)`), hex. Never the name itself. |
+| first_seen_at | timestamptz | not null default now() | |
+| | | **PK (trip_id, contributor_hash)** | |
+
+Used only for the pilot metric (docs/pilot.md). It is never returned by the API.
+
 ### Relationships
 - `destinations` 1 — N `trips`
 - `trips` 1 — N `days` (exactly one per day of the trip)
 - `trips` 1 — N `delete_requests`
 - `trips` 1 — N `trip_slug_history`
+- `trips` 1 — N `trip_contributors`
 - `days` 1 — N `day_presence`
 - Deleting a trip removes its days, editing presence, delete requests and slug history (CASCADE).
 
@@ -179,6 +190,7 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 | **BR14 Delete & requests** | **Organiser delete:** removes the trip and everything under it (all codes then return `404`). **Delete request:** every request inserts its own `pending` row, and there's no limit on how many are pending (QB8). The trip response lists every pending request (`requestedByName`, `createdAt`), newest first. **Dismiss all:** sets every pending request to `dismissed`. **Approve:** the same as an organiser delete. | F7, AC7.1–7.3, AC8.1 |
 | **BR15 Publishing** | `is_published` can be set to true or false at any time by the organiser, including on Completed trips. `published_at` is set each time the trip is published. The directory and earlier-trips lists only ever include `is_published = true`. | F4, F6, AC5.x, AC4.1 |
 | **BR16 Text cleaning** | Stored as plain text, never as HTML. Unicode is normalised to NFC form; control characters other than `\n` and `\t` are removed; length is checked **after** normalising. The frontend shows it as plain text. | goal-spec §10 |
+| **BR18 Contributor count** | After a successful day save (E10), insert `(trip_id, contributor_hash)` and ignore it if it already exists. Recording failures are logged and never fail the save. The hash is keyed per trip, so the same name on two trips can't be linked. | goal §11, Q25 |
 | **BR17 Destination check** | `destinationId` must exist in `destinations`. Destinations are added to the table **only from Geoapify results returned by destination search** (E2), and updated by `(provider, provider_place_id)` if they already exist. Clients can't create arbitrary destinations; an unknown `destinationId` is a `400 VALIDATION_ERROR` on that field. | F1 |
 
 ## 5. Authentication & Authorization

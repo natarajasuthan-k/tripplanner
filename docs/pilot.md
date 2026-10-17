@@ -30,7 +30,7 @@ Run these read-only queries in the Neon SQL editor.
 | Metric                           | Target       | How                                                     |
 | -------------------------------- | ------------ | ------------------------------------------------------- |
 | Create and share in ≤ 1 minute   | ≤ 1 min      | Watch one organiser do it, or ask in the feedback form. |
-| Trips edited by 2 or more people | ≥ 80%        | See the note below. Ask in the feedback form for now.   |
+| Trips edited by 2 or more people | ≥ 80%        | Query C                                                 |
 | Places used from suggestions     | ≥ 1 per trip | Query A                                                 |
 | Data-loss incidents              | 0            | Feedback, plus the error logs (5xx on day saves)        |
 | Hosting cost                     | $0           | Billing pages of Cloudflare, Neon, Resend and Geoapify  |
@@ -53,13 +53,15 @@ select count(*) as trips,
 from trips;
 ```
 
-> **Measurement gap:** only the _last_ editor of each day is stored, so "2 or more contributors per trip" can't be measured exactly from the data. Query C gives a lower bound. If this metric matters, add an anonymous per-trip contributor count before the pilot. It needs a small spec change: a new table, without names.
+> **How contributors are counted (goal Q25):** each day save records a one-way hash of the trip and the editor's display name in `trip_contributors`; names are never stored there. Two people using the same name count once, so Query C is a slight under-count.
 
-**Query C: lower bound on distinct editors per trip.**
+**Query C: share of trips edited by 2 or more people.**
 
 ```sql
-select trip_id, count(distinct updated_by_name) as editors
-from days where updated_by_name is not null group by trip_id order by editors desc;
+select round(100.0 * count(*) filter (where contributors >= 2) / nullif(count(*), 0), 1)
+         as pct_trips_with_2plus,
+       count(*) as trips_with_any_edit
+from (select trip_id, count(*) as contributors from trip_contributors group by trip_id) t;
 ```
 
 ## Weekly routine (about 15 minutes)

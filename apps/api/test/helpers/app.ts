@@ -11,7 +11,7 @@ export function setupDb() {
   beforeEach(async () => {
     await db.execute(
       sql`TRUNCATE destinations, trips, days, day_presence, delete_requests, provider_cache,
-          trip_slug_history, rate_counters RESTART IDENTITY CASCADE`,
+          trip_slug_history, rate_counters, trip_contributors RESTART IDENTITY CASCADE`,
     );
   });
   afterAll(async () => {
