@@ -18,6 +18,8 @@ export interface Env {
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
   /** `fake` serves built-in fixture destinations (local dev, tests); `live` calls Geoapify. */
   PROVIDER_MODE: 'live' | 'fake';
+  /** `live` sends via Resend; `log` only logs a redacted line (local dev, tests). */
+  EMAIL_MODE: 'live' | 'log';
 
   // Rate-limit bindings (optional so tests can omit them)
   RL_READ?: RateLimit;

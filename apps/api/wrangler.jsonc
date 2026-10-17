@@ -28,5 +28,7 @@
     "LOG_LEVEL": "debug",
     // "fake" = built-in fixture destinations (no API key needed). Production must use "live".
     "PROVIDER_MODE": "fake",
+    // "log" = don't send emails, just log a redacted line. Production must use "live".
+    "EMAIL_MODE": "log",
   },
 }

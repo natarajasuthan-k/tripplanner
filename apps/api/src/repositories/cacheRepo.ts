@@ -7,14 +7,18 @@ import { providerCache, rateCounters } from '../db/schema';
 export async function getCached<T>(
   db: Db,
   key: string,
-): Promise<{ payload: T; fresh: boolean } | null> {
+): Promise<{ payload: T; fresh: boolean; fetchedAt: Date } | null> {
   const [row] = await db
     .select()
     .from(providerCache)
     .where(eq(providerCache.cacheKey, key))
     .limit(1);
   if (!row) return null;
-  return { payload: row.payload as T, fresh: row.expiresAt.getTime() > Date.now() };
+  return {
+    payload: row.payload as T,
+    fresh: row.expiresAt.getTime() > Date.now(),
+    fetchedAt: row.fetchedAt,
+  };
 }
 
 export async function putCached(

@@ -9,10 +9,13 @@ import { dbMiddleware, defaultDbFactory, type DbFactory } from './middleware/db'
 import { requestContext } from './middleware/requestContext';
 import { securityHeaders } from './middleware/securityHeaders';
 import { tripAccess } from './middleware/tripAccess';
+import { defaultSendEmail, type SendEmail } from './integrations/email';
 import { dayRoutes } from './routes/days';
 import { deleteRequestRoutes } from './routes/deleteRequests';
 import { destinationRoutes } from './routes/destinations';
 import { healthRoutes, type PingDb } from './routes/health';
+import { publishedRoutes } from './routes/published';
+import { recoverRoutes } from './routes/recover';
 import { tripRoutes } from './routes/trips';
 
 export interface AppDeps {
@@ -20,6 +23,8 @@ export interface AppDeps {
   dbFactory: DbFactory;
   /** Outbound fetch for providers (tests inject a fake). */
   fetch: typeof fetch;
+  /** Email sender (tests inject a recorder). */
+  sendEmail: SendEmail;
 }
 
 const defaultPingDb: PingDb = async (env) => {
@@ -32,7 +37,12 @@ const defaultPingDb: PingDb = async (env) => {
 };
 
 export function createApp(deps: Partial<AppDeps> = {}) {
-  const { pingDb = defaultPingDb, dbFactory = defaultDbFactory, fetch: fetchFn } = deps;
+  const {
+    pingDb = defaultPingDb,
+    dbFactory = defaultDbFactory,
+    fetch: fetchFn,
+    sendEmail = defaultSendEmail,
+  } = deps;
 
   const app = new OpenAPIHono<AppBindings>({ defaultHook: validationHook });
 
@@ -55,15 +65,18 @@ export function createApp(deps: Partial<AppDeps> = {}) {
   api.use('/destinations/*', dbMiddleware(dbFactory));
   api.use('/trips', dbMiddleware(dbFactory));
   api.use('/trips/*', dbMiddleware(dbFactory));
+  api.use('/recover', dbMiddleware(dbFactory));
   // Resolve access codes before any route-level validation (404 precedes 400, api-contract §2).
   api.use('/trips/:token', tripAccess);
   api.use('/trips/:token/*', tripAccess);
 
   api.route('/', destinationRoutes(fetchFn));
-  // Phase 2: `/trips/published` routes must be registered before `/trips/{token}`.
-  api.route('/', tripRoutes());
+  // `/trips/published…` must be registered before `/trips/{token}` (api-contract §4).
+  api.route('/', publishedRoutes());
+  api.route('/', tripRoutes(sendEmail));
   api.route('/', dayRoutes());
   api.route('/', deleteRequestRoutes());
+  api.route('/', recoverRoutes(sendEmail));
 
   api.doc31('/openapi.json', {
     openapi: '3.1.0',

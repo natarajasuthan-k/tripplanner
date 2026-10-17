@@ -104,6 +104,84 @@ export type SaveDayResponse = z.infer<typeof saveDayResponseSchema>;
 export const deleteRequestResponseSchema = z.object({ deleteRequest: deleteRequestViewSchema });
 export const dismissResponseSchema = z.object({ dismissedCount: z.int() });
 
+export const tripStatusResponseSchema = z.object({ status: tripStatusSchema });
+
+export const tripSummarySchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  destination: destinationSchema,
+  fromDate: z.string(),
+  toDate: z.string(),
+  dayCount: z.int(),
+  isCompleted: z.boolean(),
+  publishedAt: z.string().nullable(),
+});
+export type TripSummary = z.infer<typeof tripSummarySchema>;
+
+export const tripSummaryPageSchema = z.object({
+  items: z.array(tripSummarySchema),
+  page: z.int(),
+  limit: z.int(),
+  total: z.int(),
+  hasMore: z.boolean(),
+});
+export type TripSummaryPage = z.infer<typeof tripSummaryPageSchema>;
+
+export const publicTripViewSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  canonicalSlug: z.string(),
+  destination: destinationSchema,
+  fromDate: z.string(),
+  toDate: z.string(),
+  dayCount: z.int(),
+  status: tripStatusSchema,
+  days: z.array(daySchema),
+});
+export type PublicTripView = z.infer<typeof publicTripViewSchema>;
+
+export const publicTripResponseSchema = z.object({
+  trip: publicTripViewSchema,
+  access: accessSchema,
+});
+export type PublicTripResponse = z.infer<typeof publicTripResponseSchema>;
+
+export const placeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  category: z.string(),
+  categoryLabel: z.string(),
+  description: z.string().nullable(),
+  address: z.string().nullable(),
+  lat: z.number(),
+  lon: z.number(),
+  sourceUrl: z.string().nullable(),
+  wikipediaUrl: z.string().nullable(),
+});
+export type Place = z.infer<typeof placeSchema>;
+
+export const placesResponseSchema = z.object({
+  items: z.array(placeSchema),
+  stale: z.boolean(),
+  fetchedAt: z.string(),
+  attribution: z.string(),
+});
+export type PlacesResponse = z.infer<typeof placesResponseSchema>;
+
+export const recoverResponseSchema = z.object({ message: z.string() });
+
+export const RECOVER_MESSAGE = "If we have trips for this email, we've sent the links.";
+
+/** `details` of 409 DAYS_WOULD_BE_REMOVED. */
+export interface RemovedDay {
+  position: number;
+  date: string;
+  textPreview: string;
+}
+export interface DaysWouldBeRemovedDetails {
+  removedDays: RemovedDay[];
+}
+
 /** `details` of 409 DAY_VERSION_CONFLICT. */
 export interface DayConflictDetails {
   current: Day;

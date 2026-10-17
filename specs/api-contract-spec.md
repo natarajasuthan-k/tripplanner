@@ -430,7 +430,7 @@ Destination problems are reported as `400 VALIDATION_ERROR` on the `destinationI
 | `version` | int | Yes | The `trip.version` that was last loaded |
 | `name` | string | No | Same rules as E4 |
 | `destinationId` | uuid | No | Same rules as E4 |
-| `fromDate`, `toDate` | date | No | Same rules as E4, checked against the resulting pair of dates. If only one is sent, it is combined with the existing other date. |
+| `fromDate`, `toDate` | date | No | Same rules as E4, checked against the resulting pair of dates. If only one is sent, it is combined with the existing other date. An **unchanged** past `fromDate` is allowed, so a trip already under way can still be edited (goal Q24). |
 | `confirmRemoveDays` | boolean | No (default `false`) | Must be `true` to remove days that have text |
 
 At least one of `name`, `destinationId`, `fromDate` or `toDate` must be sent.

@@ -13,4 +13,5 @@ export const testEnv: Env = {
   EMAIL_FROM: 'test@example.com',
   LOG_LEVEL: 'error',
   PROVIDER_MODE: 'fake',
+  EMAIL_MODE: 'log',
 };
