@@ -12,13 +12,15 @@ export function EarlierTripsList({
   const query = usePublishedTrips({ destinationId, excludeSlug, limit: 10 });
 
   if (query.isPending) {
-    return <p className="text-sm text-slate-500">Loading earlier trips…</p>;
+    return <p className="text-sm text-slate-600 dark:text-slate-400">Loading earlier trips…</p>;
   }
   if (query.isError) {
-    return <p className="text-sm text-slate-500">Couldn’t load earlier trips.</p>;
+    return (
+      <p className="text-sm text-slate-600 dark:text-slate-400">Couldn’t load earlier trips.</p>
+    );
   }
   if (query.data.items.length === 0) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">No earlier trips yet.</p>;
+    return <p className="text-sm text-slate-600 dark:text-slate-400">No earlier trips yet.</p>;
   }
   return (
     <ul className="space-y-2">

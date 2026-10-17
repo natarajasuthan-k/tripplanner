@@ -111,7 +111,9 @@ export const DestinationAutocomplete = forwardRef<HTMLInputElement, Props>(
                   : 'Couldn’t search destinations. Please try again.'}
               </li>
             ) : items.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-slate-500">No matching cities</li>
+              <li className="px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
+                No matching cities
+              </li>
             ) : (
               items.map((d, i) => (
                 <li
@@ -129,7 +131,7 @@ export const DestinationAutocomplete = forwardRef<HTMLInputElement, Props>(
                   }`}
                 >
                   <span className="font-medium">{d.name}</span>
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-slate-600 dark:text-slate-400">
                     {', '}
                     {[d.region !== d.name ? d.region : null, d.country].filter(Boolean).join(', ')}
                   </span>

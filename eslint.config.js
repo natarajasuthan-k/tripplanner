@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/.wrangler/**', '**/coverage/**', '**/src/db/migrations/**'],
+    ignores: [
+      '**/dist/**',
+      '**/.wrangler/**',
+      '**/coverage/**',
+      '**/src/db/migrations/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -34,7 +41,14 @@ export default tseslint.config(
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    files: ['apps/api/**/*.ts', 'packages/**/*.ts', '*.config.{js,ts}', 'apps/*/*.config.ts'],
+    files: [
+      'apps/api/**/*.ts',
+      'packages/**/*.ts',
+      'e2e/**/*.ts',
+      'apps/web/tooling/**/*.ts',
+      '*.config.{js,ts}',
+      'apps/*/*.config.ts',
+    ],
     languageOptions: { globals: { ...globals.node, ...globals.serviceworker } },
   },
 );

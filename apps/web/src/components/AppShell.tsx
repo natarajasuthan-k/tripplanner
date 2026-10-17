@@ -35,7 +35,7 @@ export function AppShell() {
             </NavLink>
             <Link
               to="/new"
-              className="ml-auto rounded-lg bg-teal-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:ml-0 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300"
+              className="ml-auto rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 sm:ml-0 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300"
             >
               New trip
             </Link>
@@ -46,7 +46,7 @@ export function AppShell() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <Suspense fallback={<p className="text-slate-500">Loading…</p>}>
+        <Suspense fallback={<p className="text-slate-600 dark:text-slate-400">Loading…</p>}>
           <Outlet />
         </Suspense>
       </main>

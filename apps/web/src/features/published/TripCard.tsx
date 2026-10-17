@@ -21,7 +21,7 @@ export function TripCard({ trip, compact = false }: { trip: TripSummary; compact
         <MapPin className="size-3.5 shrink-0" aria-hidden />
         {trip.destination.name}, {trip.destination.country}
       </p>
-      <p className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+      <p className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
         <CalendarDays className="size-3.5 shrink-0" aria-hidden />
         {formatShortRange(trip.fromDate, trip.toDate)} · {trip.dayCount} day
         {trip.dayCount === 1 ? '' : 's'}

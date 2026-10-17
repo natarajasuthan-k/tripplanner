@@ -12,6 +12,8 @@ export interface Env {
   EMAIL_HMAC_SECRET: string;
 
   // Vars
+  /** `production` enforces live providers, HTTPS origins and real secrets (lib/config.ts). */
+  ENVIRONMENT: 'development' | 'test' | 'production';
   APP_PUBLIC_URL: string;
   CORS_ORIGIN: string;
   EMAIL_FROM: string;

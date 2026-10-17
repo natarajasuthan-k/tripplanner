@@ -62,7 +62,8 @@ export function publishedRoutes() {
     })
     .openapi(getRoute, async (c) => {
       const res = await getPublishedTrip(c.var.db, c.req.valid('param').slug);
-      c.header('Cache-Control', 'public, max-age=60');
+      // Always revalidate: un-publishing or deleting must take effect immediately (privacy).
+      c.header('Cache-Control', 'no-cache');
       return c.json(res, 200);
     });
 }

@@ -29,7 +29,7 @@ export function PlaceList({ destinationId, days, onAdd }: PlaceListProps) {
   }
   if (query.isError) {
     return (
-      <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+      <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
         <p>
           {isApiError(query.error, 'PROVIDER_UNAVAILABLE')
             ? 'Suggestions unavailable right now.'
@@ -46,7 +46,7 @@ export function PlaceList({ destinationId, days, onAdd }: PlaceListProps) {
   return (
     <div className="space-y-3">
       {items.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           No suggestions for this place yet.
         </p>
       ) : (
@@ -59,7 +59,7 @@ export function PlaceList({ destinationId, days, onAdd }: PlaceListProps) {
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{place.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     {place.categoryLabel}
                   </p>
                   {place.description && (
@@ -87,7 +87,7 @@ export function PlaceList({ destinationId, days, onAdd }: PlaceListProps) {
           ))}
         </ul>
       )}
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         {query.data.stale ? 'Showing saved suggestions. ' : ''}
         {attribution}
       </p>
@@ -119,7 +119,9 @@ function AddToDayPopover({
           sideOffset={4}
           className="z-50 max-h-72 w-56 overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
         >
-          <p className="px-2 py-1 text-xs font-medium text-slate-500">Add to which day?</p>
+          <p className="px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400">
+            Add to which day?
+          </p>
           <ul>
             {days.map((day) => (
               <li key={day.id}>
@@ -132,7 +134,7 @@ function AddToDayPopover({
                   className="w-full rounded-lg px-2 py-1.5 text-left text-sm hover:bg-teal-50 dark:hover:bg-teal-400/10"
                 >
                   Day {day.position}
-                  <span className="ml-1 text-slate-500">
+                  <span className="ml-1 text-slate-600 dark:text-slate-400">
                     · {format(parseISO(day.date), 'EEE d MMM')}
                   </span>
                 </button>

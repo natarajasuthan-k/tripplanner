@@ -44,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={`flex items-start gap-3 rounded-xl border bg-white p-3 text-sm shadow-lg dark:bg-slate-900 ${TONES[t.tone]}`}
           >
             <Toast.Description className="flex-1">{t.message}</Toast.Description>
-            <Toast.Close aria-label="Dismiss" className="text-slate-500">
+            <Toast.Close aria-label="Dismiss" className="text-slate-600 dark:text-slate-400">
               <X className="size-4" aria-hidden />
             </Toast.Close>
           </Toast.Root>

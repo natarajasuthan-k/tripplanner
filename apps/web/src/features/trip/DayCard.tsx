@@ -79,7 +79,7 @@ export function DayCard({
       <header className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 id={headingId} className="font-semibold">
           Day {day.position}
-          <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
+          <span className="ml-2 font-normal text-slate-600 dark:text-slate-400">
             {format(parseISO(day.date), 'EEE d MMM')}
           </span>
         </h3>
@@ -134,7 +134,7 @@ export function DayCard({
             }}
             className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 leading-relaxed outline-none focus:border-teal-500 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:focus:border-teal-400 dark:focus:bg-slate-900"
           />
-          <div className="mt-1 flex justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-1 flex justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
             <LastEdited day={day} />
             <span className={length >= DAY_TEXT_WARN ? 'text-amber-600 dark:text-amber-400' : ''}>
               {length.toLocaleString()}/{DAY_TEXT_MAX.toLocaleString()}
@@ -146,9 +146,9 @@ export function DayCard({
           {day.text ? (
             <p className="leading-relaxed whitespace-pre-wrap">{day.text}</p>
           ) : (
-            <p className="text-slate-400 italic dark:text-slate-500">Nothing planned yet.</p>
+            <p className="text-slate-600 italic dark:text-slate-400">Nothing planned yet.</p>
           )}
-          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             <LastEdited day={day} />
           </div>
         </>
@@ -200,7 +200,7 @@ const STATUS_TEXT: Partial<Record<SaveStatus, string>> = {
 
 function SaveStatusText({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
   return (
-    <span aria-live="polite" className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+    <span aria-live="polite" className="ml-auto text-xs text-slate-600 dark:text-slate-400">
       {status === 'error' ? (
         <span className="inline-flex items-center gap-2 text-red-600 dark:text-red-400">
           Not saved
@@ -286,7 +286,7 @@ function VersionBox({ title, text }: { title: string; text: string }) {
         {title}
       </p>
       <pre className="max-h-48 overflow-auto rounded-lg bg-white p-2 font-sans text-sm whitespace-pre-wrap dark:bg-slate-950">
-        {text || <em className="text-slate-400">(empty)</em>}
+        {text || <em className="text-slate-600 dark:text-slate-400">(empty)</em>}
       </pre>
     </div>
   );

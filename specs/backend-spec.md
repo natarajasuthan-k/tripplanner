@@ -318,6 +318,8 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 - **CI (GitHub Actions):** Type check, lint, unit and integration tests (Postgres service container), then build. On `main`: run migrations, then `wrangler deploy`.
 
 ## 12. Deployment
+
+> Step-by-step setup, secrets, verification, rollback and restore are in [`docs/deployment.md`](../docs/deployment.md). The Worker refuses to serve in production when its configuration is unsafe (`apps/api/src/lib/config.ts`), and `/health` reports `config: error`.
 - **Hosting:**
   - API on **Cloudflare Workers** (`api.<domain>` or `*.workers.dev`).
   - Frontend on **Cloudflare Pages**.

@@ -40,7 +40,7 @@ export function HowItWorksSteps({ compact = false }: { compact?: boolean }) {
             className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-full bg-teal-600 text-sm font-semibold text-white dark:bg-teal-400 dark:text-slate-950">
+              <span className="flex size-7 items-center justify-center rounded-full bg-teal-700 text-sm font-semibold text-white dark:bg-teal-400 dark:text-slate-950">
                 {i + 1}
               </span>
               <Icon className="size-4 text-teal-600 dark:text-teal-400" aria-hidden />

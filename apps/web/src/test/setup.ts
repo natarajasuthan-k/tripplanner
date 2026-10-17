@@ -5,7 +5,7 @@ import { resetMyTripsCache } from '../lib/myTrips';
 import { resetPreferencesCache } from '../lib/preferences';
 
 // Lazy route chunks compile on first use in tests; allow more than the default 1s.
-configure({ asyncUtilTimeout: 15_000 });
+configure({ asyncUtilTimeout: 30_000 });
 
 afterEach(() => {
   cleanup();

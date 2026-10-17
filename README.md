@@ -17,8 +17,12 @@ apps/
   api/        Hono API on Cloudflare Workers (Drizzle ORM, Postgres)
 packages/
   shared/     Zod schemas, limits, error codes, date/text rules, permission matrix
+e2e/          Playwright end-to-end tests (desktop + mobile, with axe accessibility checks)
 specs/        The four specs
+docs/         Deployment runbook and pilot plan
 ```
+
+**Going live:** follow [docs/deployment.md](docs/deployment.md), then run the pilot from [docs/pilot.md](docs/pilot.md).
 
 ## Prerequisites
 
@@ -33,6 +37,7 @@ pnpm install
 cp apps/api/.dev.vars.example apps/api/.dev.vars   # then fill in the secrets
 pnpm db:up          # Postgres 17 on localhost:5432
 pnpm db:migrate     # apply migrations
+pnpm db:seed        # optional: sample trips (local databases only)
 pnpm dev            # API on :8787, web on :5173 (requests to /api are forwarded to the API)
 ```
 
@@ -57,6 +62,8 @@ docker compose exec db createdb -U trip tripplanner_test
 | `pnpm build`                       | Production builds (web bundle, Worker dry-run)        |
 | `pnpm db:generate`                 | Generate a migration from `apps/api/src/db/schema.ts` |
 | `pnpm db:migrate`                  | Apply migrations to `DATABASE_URL`                    |
+| `pnpm db:seed`                     | Reset a local database to sample trips                |
+| `pnpm test:e2e`                    | Playwright end-to-end tests (needs `pnpm db:up`)      |
 
 ## Working spec-first
 

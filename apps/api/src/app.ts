@@ -3,6 +3,7 @@ import { API_VERSION_PREFIX } from '@tripplanner/shared';
 import { cors } from 'hono/cors';
 import { createDb } from './db/client';
 import type { AppBindings } from './env';
+import { cachedConfigProblems } from './lib/config';
 import { AppError } from './lib/errors';
 import { validationHook } from './lib/validation';
 import { dbMiddleware, defaultDbFactory, type DbFactory } from './middleware/db';
@@ -61,6 +62,14 @@ export function createApp(deps: Partial<AppDeps> = {}) {
 
   const api = new OpenAPIHono<AppBindings>({ defaultHook: validationHook });
   api.route('/', healthRoutes(pingDb));
+
+  // Refuse to serve with an unsafe configuration; /health reports it (details only in logs).
+  api.use('*', async (c, next) => {
+    if (cachedConfigProblems(c.env).length > 0) {
+      throw new AppError('INTERNAL_ERROR', 'The service is not configured correctly.');
+    }
+    await next();
+  });
 
   api.use('/destinations/*', dbMiddleware(dbFactory));
   api.use('/trips', dbMiddleware(dbFactory));

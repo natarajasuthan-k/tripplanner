@@ -35,7 +35,7 @@ export function Dialog({
             {dismissible && (
               <RadixDialog.Close
                 aria-label="Close"
-                className="-m-1 rounded-md p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="-m-1 rounded-md p-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X className="size-5" aria-hidden />
               </RadixDialog.Close>

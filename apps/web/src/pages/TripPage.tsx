@@ -70,7 +70,7 @@ function TripSkeleton() {
         <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
       ))}
       {slow && (
-        <p role="status" className="text-sm text-slate-500">
+        <p role="status" className="text-sm text-slate-600 dark:text-slate-400">
           Waking up the server…
         </p>
       )}

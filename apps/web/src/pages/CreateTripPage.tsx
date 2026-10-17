@@ -28,7 +28,8 @@ export default function CreateTripPage() {
 
 function CopyPlan({ slug }: { slug: string }) {
   const source = usePublishedTrip(slug);
-  if (source.isPending) return <p className="text-slate-500">Loading the plan to copy…</p>;
+  if (source.isPending)
+    return <p className="text-slate-600 dark:text-slate-400">Loading the plan to copy…</p>;
   if (source.isError) {
     return (
       <CreateLayout

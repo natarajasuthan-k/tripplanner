@@ -19,7 +19,9 @@
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @tripplanner/api db:generate",
-    "db:migrate": "pnpm --filter @tripplanner/api db:migrate"
+    "db:migrate": "pnpm --filter @tripplanner/api db:migrate",
+    "db:seed": "pnpm --filter @tripplanner/api db:seed",
+    "test:e2e": "pnpm --filter @tripplanner/e2e test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

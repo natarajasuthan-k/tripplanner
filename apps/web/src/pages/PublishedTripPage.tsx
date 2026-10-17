@@ -25,7 +25,11 @@ export default function PublishedTripPage() {
 
   if (query.error instanceof ApiError && query.error.status === 404) return <NotFoundView />;
   if (query.isError) {
-    return <p className="py-12 text-center text-slate-600">Couldn’t load this trip.</p>;
+    return (
+      <p className="py-12 text-center text-slate-600 dark:text-slate-400">
+        Couldn’t load this trip.
+      </p>
+    );
   }
   if (query.isPending) {
     return (
@@ -93,14 +97,14 @@ function ReadOnlyDay({ day }: { day: Day }) {
     >
       <h3 id={`pday-${day.id}`} className="mb-2 font-semibold">
         Day {day.position}
-        <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
+        <span className="ml-2 font-normal text-slate-600 dark:text-slate-400">
           {format(parseISO(day.date), 'EEE d MMM')}
         </span>
       </h3>
       {day.text ? (
         <p className="leading-relaxed whitespace-pre-wrap">{day.text}</p>
       ) : (
-        <p className="text-slate-400 italic dark:text-slate-500">Nothing planned for this day.</p>
+        <p className="text-slate-600 italic dark:text-slate-400">Nothing planned for this day.</p>
       )}
     </article>
   );

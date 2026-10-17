@@ -211,7 +211,7 @@ export function TripForm({
         </div>
       </div>
       <div aria-live="polite" className="space-y-1 text-sm">
-        <p className="text-slate-500 dark:text-slate-400">
+        <p className="text-slate-600 dark:text-slate-400">
           {dayCount !== null
             ? `${dayCount} day${dayCount === 1 ? '' : 's'}${dayCount > TRIP_MAX_DAYS ? ` — the maximum is ${TRIP_MAX_DAYS}` : ''}`
             : `Up to ${TRIP_MAX_DAYS} days.`}
@@ -226,7 +226,8 @@ export function TripForm({
       {mode !== 'edit' && (
         <div>
           <label htmlFor="organiserEmail" className="mb-1 block font-medium">
-            Your email <span className="font-normal text-slate-500">(optional)</span>
+            Your email{' '}
+            <span className="font-normal text-slate-600 dark:text-slate-400">(optional)</span>
           </label>
           <input
             id="organiserEmail"
@@ -239,7 +240,7 @@ export function TripForm({
             className={inputClass(!!errors.organiserEmail)}
             {...register('organiserEmail')}
           />
-          <p id="organiserEmail-hint" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p id="organiserEmail-hint" className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             We’ll email you the organiser link so you never lose it. Used for nothing else.
           </p>
           {fieldError('organiserEmail')}

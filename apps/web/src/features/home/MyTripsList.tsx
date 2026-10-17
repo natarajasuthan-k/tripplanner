@@ -24,7 +24,7 @@ export function MyTripsList() {
               className="min-w-0 flex-1 rounded-md hover:underline"
             >
               <span className="block truncate font-medium">{t.name}</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
                 Last opened {format(parseISO(t.lastOpenedAt), 'd MMM yyyy')}
               </span>
             </Link>
@@ -34,14 +34,14 @@ export function MyTripsList() {
               onClick={() => forgetTrip(t.token)}
               aria-label={`Remove ${t.name} from this device`}
               title="Remove from this device"
-              className="rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="rounded-md p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <X className="size-4" aria-hidden />
             </button>
           </li>
         ))}
       </ul>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         Removing a trip here only forgets it on this device — it doesn’t delete the trip.
       </p>
     </section>

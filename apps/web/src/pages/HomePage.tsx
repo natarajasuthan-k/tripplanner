@@ -43,7 +43,7 @@ export default function HomePage() {
 
       <RecentlyPublished />
 
-      <footer className="flex flex-wrap justify-center gap-4 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800">
+      <footer className="flex flex-wrap justify-center gap-4 border-t border-slate-200 pt-6 text-sm text-slate-600 dark:text-slate-400 dark:border-slate-800">
         <Link to="/recover" className="hover:underline">
           Lost your organiser link?
         </Link>
