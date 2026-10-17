@@ -15,7 +15,7 @@ test('organiser creates a trip, a traveller edits it, a viewer reads it', async 
   await page.getByRole('option', { name: /Kyoto/ }).click();
   await page.getByLabel('From', { exact: true }).fill(isoDays(10));
   await page.getByLabel('To', { exact: true }).fill(isoDays(12));
-  await expect(page.getByText('3 days')).toBeVisible();
+  await expect(page.getByText('3 days', { exact: true })).toBeVisible();
   await page.getByLabel(/Your email/).fill('organiser@example.com');
   await page.getByRole('button', { name: 'Create trip' }).click();
 
