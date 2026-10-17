@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import type { RouteObject } from 'react-router';
 import { AppShell } from './components/AppShell';
+import { RouteError } from './components/RouteError';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Route table — frontend-spec §2. Each page is its own chunk (performance budget, §8).
@@ -15,12 +16,14 @@ const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 export const routes: RouteObject[] = [
   {
     element: <AppShell />,
+    errorElement: <RouteError />,
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/new', element: <CreateTripPage /> },
-      { path: '/o/:token', element: <TripPage mode="organiser" /> },
-      { path: '/e/:token', element: <TripPage mode="editor" /> },
-      { path: '/v/:token', element: <TripPage mode="viewer" /> },
+      // Organiser / edit / view-only links share one page; the server decides the role.
+      { path: '/o/:token', element: <TripPage /> },
+      { path: '/e/:token', element: <TripPage /> },
+      { path: '/v/:token', element: <TripPage /> },
       { path: '/explore', element: <ExplorePage /> },
       { path: '/explore/:slug', element: <PublishedTripPage /> },
       { path: '/recover', element: <RecoverPage /> },

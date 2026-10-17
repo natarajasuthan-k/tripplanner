@@ -17,5 +17,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // The first test in each file compiles lazy route chunks, which can take several seconds.
+    testTimeout: 30_000,
   },
 });

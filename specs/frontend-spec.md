@@ -20,7 +20,7 @@
 | Icons | **lucide-react** | Light; only the icons used are bundled. |
 | Forms / validation | **React Hook Form + Zod** | Zod rules can be shared with the backend if it's also TypeScript. |
 | Dates | **date-fns** + native `<input type="date">` | Native date pickers are the most usable on mobile. |
-| Testing | **Vitest + React Testing Library + MSW** (fake API); **Playwright** (end-to-end) | See §11. |
+| Testing | **Vitest + React Testing Library** with a small in-test fake `fetch` (`src/test/fakeApi.ts`) instead of MSW; **Playwright** (end-to-end) | See §11. |
 | Hosting | **Cloudflare Pages** (free plan) | Meets the free-hosting constraint. Every unknown path serves the app so client routes work. |
 
 ## 2. Pages / Routes
@@ -310,7 +310,7 @@ The rules below mirror those in `goal-spec.md` §8. **The server checks them aga
 
 ## 11. Testing Strategy
 - **Unit (Vitest):** Date range checks (past dates, same day, at most 60 days), the Zod schemas, generating the list of days, working out which days a shrink would remove, the "Add to plan" text format, how many days a copy can include, the autosave timing and save-queue logic, merging re-fetched data with local edits, the `tp.myTrips` list (most recent first, maximum 50).
-- **Component (React Testing Library + MSW fake API):**
+- **Component (React Testing Library + the in-test fake API):**
   - `TripForm` errors, including the optional email and copy mode
   - `DayCard` autosave, retry after failure, and `ConflictPanel` after a `409`
   - `PresenceIndicator`

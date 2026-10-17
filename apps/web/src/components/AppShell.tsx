@@ -1,6 +1,7 @@
 import { Plane } from 'lucide-react';
 import { Suspense } from 'react';
 import { Link, NavLink, Outlet } from 'react-router';
+import { OfflineBanner } from './OfflineBanner';
 import { ThemeToggle } from './ThemeToggle';
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -14,7 +15,8 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 export function AppShell() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+      <OfflineBanner />
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
         {/* Mobile: logo + theme on row 1, nav on row 2. sm+: single row. */}
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">

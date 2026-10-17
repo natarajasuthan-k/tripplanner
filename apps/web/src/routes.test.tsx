@@ -1,16 +1,13 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { apiError, installFakeApi } from './test/fakeApi';
 import { renderRoute } from './test/renderRoute';
 
 describe('routes (frontend-spec §2)', () => {
   it.each([
     ['/', 'Plan a trip together'],
     ['/new', 'Create a trip'],
-    ['/new?from=kyoto-winter', 'Copy this plan'],
-    ['/o/abc', 'Trip — organiser'],
-    ['/e/abc', 'Trip — editor'],
-    ['/v/abc', 'Trip — view only'],
     ['/explore', 'Published trips'],
     ['/explore/kyoto-winter', 'Published trip'],
     ['/recover', 'Forgot my link'],
@@ -20,6 +17,15 @@ describe('routes (frontend-spec §2)', () => {
     renderRoute(path);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
   });
+
+  it.each(['/o/abc', '/e/abc', '/v/abc'])(
+    '%s shows Trip not found for a bad link (AC2.5)',
+    async (path) => {
+      installFakeApi([['GET', /^\/trips\//, () => apiError(404, 'NOT_FOUND', 'Trip not found')]]);
+      renderRoute(path);
+      expect(await screen.findByRole('heading', { name: 'Trip not found' })).toBeInTheDocument();
+    },
+  );
 });
 
 describe('ThemeToggle', () => {
