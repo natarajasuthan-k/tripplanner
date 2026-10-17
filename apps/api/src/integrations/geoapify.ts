@@ -58,13 +58,33 @@ export async function geoapifyAutocomplete(
   if (!res.ok) throw new ProviderError(`Geoapify responded ${res.status}`);
 
   const body = (await res.json()) as { results?: GeoapifyResult[] };
-  const seen = new Set<string>();
+  return mergeDuplicateDestinations(
+    (body.results ?? []).map(mapGeoapifyResult).filter((d): d is ProviderDestination => d !== null),
+  );
+}
+
+/** Same city if name and country match and coordinates agree to ~1 km (2 decimal places). */
+function sameCityKey(d: ProviderDestination): string {
+  return [d.name.trim().toLowerCase(), d.countryCode, d.lat.toFixed(2), d.lon.toFixed(2)].join('|');
+}
+
+/**
+ * Geoapify can return the same city twice (e.g. "Kyoto, Kyoto Prefecture" and "Kyoto" with no
+ * region, identical coordinates). Keep one per city, in first-seen order, preferring the entry
+ * that has a region.
+ */
+export function mergeDuplicateDestinations(items: ProviderDestination[]): ProviderDestination[] {
+  const byKey = new Map<string, number>();
   const out: ProviderDestination[] = [];
-  for (const raw of body.results ?? []) {
-    const mapped = mapGeoapifyResult(raw);
-    if (mapped && !seen.has(mapped.providerPlaceId)) {
-      seen.add(mapped.providerPlaceId);
-      out.push(mapped);
+  for (const item of items) {
+    const key = sameCityKey(item);
+    const existing = byKey.get(key);
+    if (existing === undefined) {
+      if (out.some((o) => o.providerPlaceId === item.providerPlaceId)) continue;
+      byKey.set(key, out.length);
+      out.push(item);
+    } else if (!out[existing]!.region && item.region) {
+      out[existing] = item;
     }
   }
   return out;

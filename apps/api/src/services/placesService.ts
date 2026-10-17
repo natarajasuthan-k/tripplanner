@@ -38,7 +38,8 @@ export async function getPlaces(
     };
   }
 
-  const key = `places:${destinationId}`;
+  // v2: results are now ranked (notable sights first); the version skips older cached entries.
+  const key = `places:v2:${destinationId}`;
   const cached = await getCached<Place[]>(db, key);
   if (cached?.fresh) {
     return {
