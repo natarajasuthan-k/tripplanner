@@ -21,7 +21,8 @@
     "db:generate": "pnpm --filter @tripplanner/api db:generate",
     "db:migrate": "pnpm --filter @tripplanner/api db:migrate",
     "db:seed": "pnpm --filter @tripplanner/api db:seed",
-    "test:e2e": "pnpm --filter @tripplanner/e2e test:e2e"
+    "test:e2e": "pnpm --filter @tripplanner/e2e test:e2e",
+    "deploy:atlas": "pnpm --filter @tripplanner/web exec wrangler deploy --config ../../docs/atlas/wrangler.jsonc"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
