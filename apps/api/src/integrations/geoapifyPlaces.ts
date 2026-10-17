@@ -33,8 +33,12 @@ export const PLACE_RULES: CategoryRule[] = [
 
 /** Main request; a failure here means "suggestions unavailable". */
 const PRIMARY = ['entertainment.museum', 'heritage', 'tourism.sights', 'tourism.attraction'];
-/** Extra request for numerous categories; a failure here only drops these results. */
-const SECONDARY = ['beach', 'religion.place_of_worship', 'leisure.park'];
+/**
+ * Extra requests, one per category: in big cities small temples and parks number in the
+ * thousands, so a combined request's first 100 results never reached beaches or notable parks
+ * (Chennai, Mumbai). A failure here only drops that category.
+ */
+const SECONDARY = [['beach'], ['religion.place_of_worship'], ['leisure.park']];
 
 const WIKI_BOOST = 10;
 
@@ -174,22 +178,29 @@ export async function geoapifyPlaces(
   limit: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<Place[]> {
-  const [primary, secondary] = await Promise.allSettled([
-    fetchCategories(apiKey, providerPlaceId, PRIMARY, fetchFn),
-    fetchCategories(apiKey, providerPlaceId, SECONDARY, fetchFn),
-  ]);
-  if (primary.status === 'rejected') throw primary.reason;
-  if (secondary.status === 'rejected') {
-    console.warn(
-      JSON.stringify({
-        level: 'warn',
-        msg: 'secondary places request failed',
-        error: String(secondary.reason),
-      }),
-    );
-  }
+  const groups = [PRIMARY, ...SECONDARY];
+  const results = await Promise.allSettled(
+    groups.map((categories) => fetchCategories(apiKey, providerPlaceId, categories, fetchFn)),
+  );
+  const [primary] = results;
+  if (primary!.status === 'rejected') throw primary!.reason;
+
+  // Counts per request (no names or ids) so ranking can be tuned from the logs.
+  console.log(
+    JSON.stringify({
+      level: 'info',
+      msg: 'places fetched',
+      counts: Object.fromEntries(
+        groups.map((g, i) => {
+          const r = results[i]!;
+          return [g.join(','), r.status === 'fulfilled' ? r.value.length : 'failed'];
+        }),
+      ),
+    }),
+  );
+
   return rankPlaces(
-    [...primary.value, ...(secondary.status === 'fulfilled' ? secondary.value : [])],
+    results.flatMap((r) => (r.status === 'fulfilled' ? r.value : [])),
     limit,
   );
 }

@@ -38,8 +38,8 @@ export async function getPlaces(
     };
   }
 
-  // v2: results are now ranked (notable sights first); the version skips older cached entries.
-  const key = `places:v2:${destinationId}`;
+  // v3: ranked, with one Geoapify request per numerous category; skips older cached entries.
+  const key = `places:v3:${destinationId}`;
   const cached = await getCached<Place[]>(db, key);
   if (cached?.fresh) {
     return {
