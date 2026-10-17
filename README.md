@@ -38,6 +38,14 @@ pnpm dev            # API on :8787, web on :5173 (requests to /api are forwarded
 
 Open http://localhost:5173. The API health check is at http://localhost:8787/api/v1/health, and the OpenAPI document is at `/api/v1/openapi.json`.
 
+Locally the API runs with `PROVIDER_MODE=fake` (see `apps/api/wrangler.jsonc`), so destination search uses a built-in list of cities and needs no Geoapify key.
+
+**API tests** run against a separate database. Create it once:
+
+```bash
+docker compose exec db createdb -U trip tripplanner_test
+```
+
 ## Scripts (run from the repo root)
 
 | Script                             | Does                                                  |

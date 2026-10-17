@@ -9,6 +9,20 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      # API integration tests (apps/api/test) run against a real Postgres.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: trip
+          POSTGRES_PASSWORD: trip
+          POSTGRES_DB: tripplanner_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U trip -d tripplanner_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://trip:trip@localhost:5432/tripplanner_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

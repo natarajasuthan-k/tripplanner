@@ -26,5 +26,7 @@
     "CORS_ORIGIN": "http://localhost:5173",
     "EMAIL_FROM": "Trip Planner <onboarding@resend.dev>",
     "LOG_LEVEL": "debug",
+    // "fake" = built-in fixture destinations (no API key needed). Production must use "live".
+    "PROVIDER_MODE": "fake",
   },
 }
