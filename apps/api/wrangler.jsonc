@@ -47,13 +47,14 @@
         { "name": "RL_PRESENCE", "namespace_id": "2003", "simple": { "limit": 20, "period": 60 } },
         { "name": "RL_SEARCH", "namespace_id": "2004", "simple": { "limit": 60, "period": 60 } },
       ],
-      // DEPLOY: replace both URLs with your Cloudflare Pages address (docs/deployment.md, step 4).
+      // The web app's address (docs/deployment.md, step 4). No trailing slash.
       "vars": {
         "ENVIRONMENT": "production",
-        "APP_PUBLIC_URL": "https://tripplanner.pages.dev",
-        "CORS_ORIGIN": "https://tripplanner.pages.dev",
-        // DEPLOY: must use a domain verified in Resend (docs/deployment.md, step 3).
-        "EMAIL_FROM": "Trip Planner <links@example.com>",
+        "APP_PUBLIC_URL": "https://tripplanner.natarajasuthan.workers.dev",
+        "CORS_ORIGIN": "https://tripplanner.natarajasuthan.workers.dev",
+        // TODO before inviting pilot users: switch to an address on your Resend-verified domain.
+        // onboarding@resend.dev only delivers to the Resend account owner (docs/deployment.md, step 3).
+        "EMAIL_FROM": "Trip Planner <onboarding@resend.dev>",
         "LOG_LEVEL": "info",
         "PROVIDER_MODE": "live",
         "EMAIL_MODE": "live",

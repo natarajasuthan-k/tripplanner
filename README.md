@@ -13,7 +13,7 @@ Plan trips together: one shared plan, no sign-up, just links. Built spec-first. 
 
 ```
 apps/
-  web/        React 19 SPA (Vite, Tailwind v4, React Router, TanStack Query) → Cloudflare Pages
+  web/        React 19 SPA (Vite, Tailwind v4, React Router, TanStack Query) → Cloudflare Worker (static assets)
   api/        Hono API on Cloudflare Workers (Drizzle ORM, Postgres)
 packages/
   shared/     Zod schemas, limits, error codes, date/text rules, permission matrix

@@ -9,7 +9,7 @@
 |---------|---------------------|-----|
 | Language | **TypeScript** (strict mode) | Same language as the frontend; validation rules and types can be shared. |
 | Framework | **Hono** + `@hono/zod-openapi` | Tiny and fast. Runs on Cloudflare Workers, Node and Bun, so we can move hosts later. It also produces an OpenAPI description of the API from the code. |
-| Runtime / hosting | **Cloudflare Workers** (free plan) | No slow first request after idle time (meets the 2.5s load target). Same provider as the frontend on Pages. Generous free requests per day. |
+| Runtime / hosting | **Cloudflare Workers** (free plan) | No slow first request after idle time (meets the 2.5s load target). Same provider as the frontend, which is also served by a Worker with static assets. Generous free requests per day. |
 | Database | **PostgreSQL on Neon** (free plan) | Standard Postgres, so it can grow for a mass-market launch. It supports branches for testing. |
 | DB driver | **`postgres` (postgres.js)** over TCP (Workers `nodejs_compat`) | The same driver works with Neon and the local Docker Postgres; Neon's serverless driver would need an extra proxy locally. One short-lived connection per request. Cloudflare Hyperdrive can be added later for connection pooling. |
 | ORM / migrations | **Drizzle ORM + drizzle-kit** | Light and type-safe. |
@@ -334,7 +334,7 @@ Used only for the pilot metric (docs/pilot.md). It is never returned by the API.
 > Step-by-step setup, secrets, verification, rollback and restore are in [`docs/deployment.md`](../docs/deployment.md). The Worker refuses to serve in production when its configuration is unsafe (`apps/api/src/lib/config.ts`), and `/health` reports `config: error`.
 - **Hosting:**
   - API on **Cloudflare Workers** (`api.<domain>` or `*.workers.dev`).
-  - Frontend on **Cloudflare Pages**.
+  - Frontend on a **Cloudflare Worker with static assets** (`apps/web/wrangler.jsonc`).
   - Database on **Neon**.
   - Email through **Resend**.
 - **Environments:**

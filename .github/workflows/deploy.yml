@@ -44,16 +44,14 @@ jobs:
         working-directory: apps/api
         run: pnpm exec wrangler deploy --env production
 
-      # 3. Web (Cloudflare Pages) — built against the production API URL.
+      # 3. Web (Cloudflare Worker with static assets) — built against the production API URL.
       - name: Build web
         run: pnpm --filter @tripplanner/web build
         env:
           VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
       - name: Deploy web
-        working-directory: apps/api
-        run: >-
-          pnpm exec wrangler pages deploy ../web/dist
-          --project-name "${{ vars.PAGES_PROJECT }}" --branch main --commit-dirty=true
+        working-directory: apps/web
+        run: pnpm exec wrangler deploy
 
       # 4. Smoke test: API health (DB + config) and the web app shell.
       - name: Smoke test

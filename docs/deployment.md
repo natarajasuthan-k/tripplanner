@@ -3,7 +3,7 @@
 How to take Trip Planner from this repository to a live, free-tier deployment (goal-spec §12, Phase 3; backend-spec §12).
 
 ```
- Browser ──► Cloudflare Pages (web, static)        tripplanner.pages.dev
+ Browser ──► Cloudflare Worker (web, static assets) tripplanner.<you>.workers.dev
     │
     └─────► Cloudflare Workers (API)                tripplanner-api.<you>.workers.dev
                ├─► Neon (Postgres 17)
@@ -41,10 +41,10 @@ Everything below costs **$0** on the free plans. Check the current free-plan lim
 ## 4. Cloudflare (hosting)
 
 1. Create a Cloudflare account. Note the **Account ID** (dashboard → Workers & Pages → right sidebar).
-2. Create the **Pages project**: Workers & Pages → Create → Pages → _Direct Upload_. Name it `tripplanner`, or another name if that one is taken. Upload any placeholder file; CI replaces it.
-   - Your app URL is `https://<project>.pages.dev`.
-3. In `apps/api/wrangler.jsonc` → `env.production.vars`, set **both** `APP_PUBLIC_URL` and `CORS_ORIGIN` to that URL. Commit the change.
-4. Create an **API token**: My Profile → API Tokens → _Create token_ → template **Edit Cloudflare Workers**. Then add the permission _Account → Cloudflare Pages → Edit_. Copy the token.
+2. The web app is a **Worker with static assets** named `tripplanner` (`apps/web/wrangler.jsonc`). You can create it from the dashboard (Workers & Pages → Create → upload a placeholder), or let the first deploy create it.
+   - Your app URL is `https://tripplanner.<your-subdomain>.workers.dev`. The API Worker is `tripplanner-api.<your-subdomain>.workers.dev`.
+3. In `apps/api/wrangler.jsonc` → `env.production.vars`, set **both** `APP_PUBLIC_URL` and `CORS_ORIGIN` to the app URL, with no trailing slash. Commit the change.
+4. Create an **API token**: My Profile → API Tokens → _Create token_ → template **Edit Cloudflare Workers**. That template covers both Workers. Copy the token.
 
 ## 5. Worker secrets
 
@@ -93,8 +93,7 @@ In the repository → Settings → Environments → create **`production`**, the
 | Secret   | `DATABASE_URL`          | Neon connection string (used for migrations and backups)                         |
 | Secret   | `BACKUP_PASSPHRASE`     | a long random passphrase. **Keep a copy**: backups can't be restored without it. |
 | Variable | `API_BASE_URL`          | `https://tripplanner-api.<your-subdomain>.workers.dev/api/v1`                    |
-| Variable | `APP_URL`               | `https://<project>.pages.dev`                                                    |
-| Variable | `PAGES_PROJECT`         | the Pages project name, e.g. `tripplanner`                                       |
+| Variable | `APP_URL`               | `https://tripplanner.<your-subdomain>.workers.dev`                               |
 
 Your workers.dev subdomain is shown in the Cloudflare dashboard (Workers & Pages → Overview).
 
@@ -133,7 +132,7 @@ Logs contain route patterns, statuses and timings. Access codes, emails and day 
 **Rollback.**
 
 - API: Cloudflare dashboard → Workers → Deployments → roll back, or run `wrangler rollback --env production`.
-- Web: Pages → Deployments → _Rollback to this deployment_.
+- Web: Cloudflare dashboard → Workers → tripplanner → Deployments → roll back, or `wrangler rollback` in `apps/web`.
 - Database: migrations only add things, so the previous Worker version keeps working against the newer schema.
 
 **Backups.** The **Backup** workflow runs every Monday. It also runs on demand. Each backup is a `pg_dump`, encrypted with `BACKUP_PASSPHRASE` and kept as a workflow artifact for 35 days. Neon's own point-in-time restore covers shorter windows.
@@ -162,4 +161,4 @@ These were the figures when the specs were written; check them again when you si
 
 ## Optional: custom domain
 
-Add a custom domain to the Pages project, and optionally a route for the Worker, e.g. `api.yourdomain.com`. Then update `APP_PUBLIC_URL`, `CORS_ORIGIN`, `API_BASE_URL` and `APP_URL`, and redeploy.
+Add a custom domain to the `tripplanner` Worker, and optionally to `tripplanner-api`, e.g. `api.yourdomain.com` (Workers → Settings → Domains & Routes). Then update `APP_PUBLIC_URL`, `CORS_ORIGIN`, `API_BASE_URL` and `APP_URL`, and redeploy.

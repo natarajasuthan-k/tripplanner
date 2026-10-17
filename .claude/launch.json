@@ -29,17 +29,15 @@
       "port": 8787
     },
     {
-      "name": "pages-preview",
+      "name": "web-preview",
       "runtimeExecutable": "corepack",
       "runtimeArgs": [
         "pnpm",
         "--filter",
-        "@tripplanner/api",
+        "@tripplanner/web",
         "exec",
         "wrangler",
-        "pages",
         "dev",
-        "../web/dist",
         "--port",
         "8788"
       ],

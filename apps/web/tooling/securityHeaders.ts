@@ -1,4 +1,5 @@
-// Emits Cloudflare Pages `_headers` at build time (frontend-spec §6, §8).
+// Emits Cloudflare's `_headers` file at build time (frontend-spec §6, §8); Workers static
+// assets apply it to every response.
 // The CSP allows the API origin from VITE_API_BASE_URL and pins the inline theme script by hash.
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';

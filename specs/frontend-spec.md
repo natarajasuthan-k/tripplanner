@@ -21,7 +21,7 @@
 | Forms / validation | **React Hook Form + Zod** | Zod rules can be shared with the backend if it's also TypeScript. |
 | Dates | **date-fns** + native `<input type="date">` | Native date pickers are the most usable on mobile. |
 | Testing | **Vitest + React Testing Library** with a small in-test fake `fetch` (`src/test/fakeApi.ts`) instead of MSW; **Playwright** (end-to-end) | See §11. |
-| Hosting | **Cloudflare Pages** (free plan) | Meets the free-hosting constraint. Every unknown path serves the app so client routes work. |
+| Hosting | **Cloudflare Worker with static assets** (free plan), with fallback routing to `index.html` for client-side routes. `_headers` is generated at build time. | Meets the free-hosting constraint. Every unknown path serves the app so client routes work. |
 
 ## 2. Pages / Routes
 Access is by link only (no sign-in). The secret code in the URL decides what the person can do. The server works out the person's role, and the UI follows it (§6).
@@ -346,7 +346,7 @@ The rules below mirror those in `goal-spec.md` §8. **The server checks them aga
 | Q-F7 | "Copy this plan" on published trips? | **Yes** (F12). |
 | Q-F8 | How does the app explain itself? | **A "How it works" section on Home, a `/how-it-works` guide, and first-visit tips for each role** (F13). |
 | Q-F9 | A separate page listing all of an organiser's trips? | **No.** Home is the landing page; "Your trips on this device" serves as the hub. |
-| Q-F10 | Hosting for the frontend? | **Cloudflare Pages**, the same provider as the API on Workers (backend QB1). |
+| Q-F10 | Hosting for the frontend? | **A Cloudflare Worker with static assets** (`apps/web/wrangler.jsonc`), the same provider as the API. Cloudflare's current setup flow creates static sites this way. It was originally Cloudflare Pages; `_headers` and fallback routing behave the same. |
 
 ## 13. Open Questions
 - None at present. API details are defined in `api-contract-spec.md` (E1–E17).
