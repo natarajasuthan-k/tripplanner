@@ -12,7 +12,13 @@ const TIPS: Record<Role, string> = {
 };
 
 /** First-visit tip per role, dismissible for good on this device (AC16.3–16.4). */
-export function RoleTip({ role }: { role: Role }) {
+export function RoleTip({
+  role,
+  hasRecoveryEmail = true,
+}: {
+  role: Role;
+  hasRecoveryEmail?: boolean;
+}) {
   const seen = useTipSeen(role);
   if (seen) return null;
   return (
@@ -21,7 +27,12 @@ export function RoleTip({ role }: { role: Role }) {
       className="flex items-start gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 text-sm text-teal-900 dark:border-teal-400/30 dark:bg-teal-400/10 dark:text-teal-100"
     >
       <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <p className="flex-1">{TIPS[role]}</p>
+      <p className="flex-1">
+        {TIPS[role]}
+        {role === 'organiser' && !hasRecoveryEmail && (
+          <> Next time, add your email when creating a trip so you can recover the link anywhere.</>
+        )}
+      </p>
       <button
         type="button"
         aria-label="Dismiss tip"

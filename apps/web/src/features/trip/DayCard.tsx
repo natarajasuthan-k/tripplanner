@@ -2,10 +2,12 @@ import { DAY_TEXT_MAX, DAY_TEXT_WARN, type Day, type Editor } from '@tripplanner
 import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { Check, Copy, Loader2, Pencil, RotateCcw } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Banner } from '../../components/ui/Banner';
 import { Button } from '../../components/ui/Button';
+import { useToast } from '../../components/ui/Toaster';
 import { setCachedDay } from './api';
+import { onAppendToDay, withLine } from './dayActions';
 import { useDayAutosave, type SaveStatus } from './useDayAutosave';
 import { usePresence } from './usePresence';
 
@@ -39,6 +41,24 @@ export function DayCard({
     onCompleted,
   });
   usePresence(token, day.id, editorName, canEdit && focused);
+  const toast = useToast();
+
+  // "Add to plan" (AC3.2): append through autosave so the version check applies.
+  const { text, setText, flush } = autosave;
+  useEffect(
+    () =>
+      onAppendToDay(day.id, (line) => {
+        const next = withLine(text, line);
+        if (next.length > DAY_TEXT_MAX) {
+          toast.show(`Day ${day.position} is full — remove some text first.`, 'error');
+          return;
+        }
+        setText(next);
+        flush();
+        toast.show(`Added to Day ${day.position}`);
+      }),
+    [day.id, day.position, text, setText, flush, toast],
+  );
 
   // Grow the textarea with its content.
   useLayoutEffect(() => {

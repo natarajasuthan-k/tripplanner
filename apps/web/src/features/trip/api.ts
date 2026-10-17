@@ -1,4 +1,4 @@
-// Trip endpoints (api-contract E2, E4, E5, E7, E10–E14) and the polling query.
+// Trip endpoints (api-contract E2–E17) and the polling query.
 import {
   TRIP_POLL_SECONDS,
   type CreateTripRequest,
@@ -7,6 +7,8 @@ import {
   type DeleteRequestView,
   type DestinationSearchResponse,
   type TripResponse,
+  type TripStatus,
+  type UpdateTripRequest,
 } from '@tripplanner/shared';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { apiFetch, apiFetchRaw, ApiError, toApiError } from '../../lib/api';
@@ -107,4 +109,12 @@ export const dismissDeleteRequests = (token: string) =>
 export const searchDestinations = (q: string, signal?: AbortSignal) =>
   apiFetch<DestinationSearchResponse>(`/destinations/search?q=${encodeURIComponent(q)}&limit=6`, {
     signal,
+  });
+
+export const updateTrip = (token: string, body: UpdateTripRequest) =>
+  apiFetch<TripResponse>(t(token), { method: 'PATCH', body });
+
+export const setPublished = (token: string, published: boolean) =>
+  apiFetch<{ status: TripStatus }>(`${t(token)}/${published ? 'publish' : 'unpublish'}`, {
+    method: 'POST',
   });

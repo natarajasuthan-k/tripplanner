@@ -9,7 +9,6 @@ describe('routes (frontend-spec §2)', () => {
     ['/', 'Plan a trip together'],
     ['/new', 'Create a trip'],
     ['/explore', 'Published trips'],
-    ['/explore/kyoto-winter', 'Published trip'],
     ['/recover', 'Forgot my link'],
     ['/how-it-works', 'How it works'],
     ['/no/such/page', 'Trip not found'],

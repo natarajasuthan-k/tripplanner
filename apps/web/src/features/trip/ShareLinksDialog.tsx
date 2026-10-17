@@ -1,6 +1,6 @@
 import type { TripLinks } from '@tripplanner/shared';
 import { Check, Copy, KeyRound, Share2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Dialog } from '../../components/ui/Dialog';
 import { useToast } from '../../components/ui/Toaster';
@@ -13,12 +13,15 @@ export function ShareLinksDialog({
   links,
   tripName,
   justCreated = false,
+  note,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   links: TripLinks;
   tripName: string;
   justCreated?: boolean;
+  /** Shown above the links, e.g. "We've emailed the organiser link…" (F10). */
+  note?: ReactNode;
 }) {
   const shareLinks = buildShareLinks(links);
   return (
@@ -32,6 +35,7 @@ export function ShareLinksDialog({
           : 'Anyone with a link can open the trip — no sign-up needed.'
       }
     >
+      {note && <div className="mb-3">{note}</div>}
       <ul className="space-y-3">
         {shareLinks.map((link) => (
           <ShareLinkRow key={link.kind} link={link} tripName={tripName} />

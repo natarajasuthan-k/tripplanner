@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../components/ui/Toaster';
 import { HowItWorksSteps } from '../features/home/HowItWorksSteps';
@@ -30,8 +31,8 @@ const PERMISSIONS: [string, string, string, string][] = [
   ['Edit day plans', '✅', '✅', '—'],
   ['Copy & share the edit / view links', '✅', '✅', '—'],
   ['See the organiser link', '✅', '—', '—'],
-  ['Change name, destination or dates', '✅ (soon)', '—', '—'],
-  ['Publish or un-publish', '✅ (soon)', '—', '—'],
+  ['Change name, destination or dates', '✅', '—', '—'],
+  ['Publish or un-publish', '✅', '—', '—'],
   ['Delete the trip', '✅', 'Ask the organiser', '—'],
 ];
 
@@ -112,20 +113,23 @@ export default function HowItWorksPage() {
 
       <Section id="ideas" title="Ideas & inspiration">
         <p>
-          Coming soon: suggested places of interest for your destination, earlier published trips to
-          the same place, and copying a published plan into a new trip.
+          The <strong>Ideas</strong> panel suggests places of interest for your destination — use
+          “Add” to drop one into a day. It also lists earlier published trips to the same place.
+          Found a plan you like under Explore? Use <strong>Copy this plan</strong> to start a new,
+          private trip from it with your own dates.
         </p>
       </Section>
 
       <Section id="privacy" title="Publishing & privacy">
         <p>
-          New trips are <strong>private</strong> — only people with a link can open them. Later
-          you’ll be able to publish a trip so anyone can browse it read-only; its links are never
-          shown to visitors.
+          New trips are <strong>private</strong> — only people with a link can open them. The
+          organiser can <strong>publish</strong> a trip so anyone can browse it read-only under
+          Explore; its links are never shown to visitors. Un-publish at any time.
         </p>
         <p>
-          We only store the display name you type. Your trips are remembered in this browser so you
-          can find them again.
+          We store the display name you type. If you give an email when creating a trip, we use it
+          only to send you the organiser link — the address itself is never stored or shown. Your
+          trips are also remembered in this browser.
         </p>
       </Section>
 
@@ -141,8 +145,11 @@ export default function HowItWorksPage() {
           <div>
             <dt className="font-semibold">I lost my organiser link.</dt>
             <dd>
-              Check “Your trips on this device” on the home page. Email recovery for other devices
-              is coming soon.
+              Check “Your trips on this device” on the home page. On another device, use{' '}
+              <Link to="/recover" className="text-teal-700 underline dark:text-teal-300">
+                Forgot my link
+              </Link>{' '}
+              — if you gave your email when creating the trip, we’ll send the link again.
             </dd>
           </div>
           <div>

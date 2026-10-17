@@ -1,11 +1,11 @@
 // Trip workspace for /o, /e and /v links — frontend-spec §3.3–3.4. The server-reported role
 // decides what is shown; the URL prefix is only a hint.
-import type { TripResponse } from '@tripplanner/shared';
+import type { Day, Place, TripResponse } from '@tripplanner/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
-import { CalendarDays, MapPin, Share2, Trash2 } from 'lucide-react';
+import { CalendarDays, EyeOff, Globe, MapPin, Pencil, Share2, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useBlocker, useNavigate, useParams, useSearchParams } from 'react-router';
+import { useBlocker, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { NotFoundView } from '../components/NotFoundView';
 import { Banner } from '../components/ui/Banner';
 import { Button } from '../components/ui/Button';
@@ -16,9 +16,14 @@ import {
   deleteTrip,
   dismissDeleteRequests,
   requestDeletion,
+  setPublished,
   tripKey,
   useTripQuery,
 } from '../features/trip/api';
+import { appendToDay, placeLine } from '../features/trip/dayActions';
+import { EditTripDialog } from '../features/trip/EditTripDialog';
+import { SidePanel } from '../features/trip/SidePanel';
+import type { CreatedState } from './CreateTripPage';
 import { DayCard } from '../features/trip/DayCard';
 import { DeleteRequestsBanner } from '../features/trip/DeleteRequestsBanner';
 import { DisplayNamePrompt } from '../features/trip/DisplayNamePrompt';
@@ -98,7 +103,13 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
   const [nameOpen, setNameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState<'delete' | 'approve' | null>(null);
   const [requestOpen, setRequestOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'plan' | 'ideas'>('plan');
   const afterName = useRef<(() => void) | null>(null);
+  // Captured once: dropping ?created (below) replaces the history entry and its state.
+  const location = useLocation();
+  const [created] = useState(() => location.state as CreatedState | null);
 
   // Remember this trip on the device (F11) and drop the one-off ?created flag.
   useEffect(() => {
@@ -166,7 +177,36 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
     }
   }
 
+  async function handlePublish(publish: boolean) {
+    try {
+      const { status } = await setPublished(token, publish);
+      queryClient.setQueryData<TripResponse>(tripKey(token), (prev) =>
+        prev ? { ...prev, trip: { ...prev.trip, status } } : prev,
+      );
+      toast.show(publish ? 'Trip published' : 'Trip is private again');
+    } catch (err) {
+      toast.show(isApiError(err) ? err.message : 'Couldn’t change publishing.', 'error');
+    }
+  }
+
+  // "Add to plan" (AC3.2): needs a display name first, then the DayCard appends and saves.
+  function onAddPlace(day: Day, place: Place) {
+    const add = () => {
+      if (!appendToDay(day.id, placeLine(place.name, place.categoryLabel))) {
+        toast.show('Couldn’t add the place — please try again.', 'error');
+      }
+    };
+    if (displayName) add();
+    else requestName(add);
+  }
+
   const completed = trip.status.isCompleted;
+  const panelTab = (tab: 'plan' | 'ideas') =>
+    `flex-1 rounded-lg px-3 py-1.5 text-sm font-medium ${
+      mobileTab === tab
+        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
+        : 'text-slate-600 dark:text-slate-300'
+    }`;
 
   return (
     <div className="space-y-5">
@@ -189,6 +229,24 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {permissions.canEditTrip && (
+              <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="size-4" aria-hidden />
+                Edit details
+              </Button>
+            )}
+            {permissions.canPublish &&
+              (trip.status.isPublished ? (
+                <Button variant="secondary" size="sm" onClick={() => void handlePublish(false)}>
+                  <EyeOff className="size-4" aria-hidden />
+                  Un-publish
+                </Button>
+              ) : (
+                <Button variant="secondary" size="sm" onClick={() => setPublishOpen(true)}>
+                  <Globe className="size-4" aria-hidden />
+                  Publish
+                </Button>
+              ))}
             {permissions.canViewShareLinks && trip.links && (
               <Button variant="secondary" size="sm" onClick={() => setShareOpen(true)}>
                 <Share2 className="size-4" aria-hidden />
@@ -216,7 +274,7 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
         </div>
       </header>
 
-      <RoleTip role={tokenRole} />
+      <RoleTip role={tokenRole} hasRecoveryEmail={trip.hasRecoveryEmail ?? true} />
 
       {trip.pendingDeleteRequests && (
         <DeleteRequestsBanner
@@ -228,19 +286,63 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
       {completed && <Banner>This trip has ended and is now read-only.</Banner>}
       {role === 'viewer' && !completed && <Banner>You’re viewing this trip read-only.</Banner>}
 
-      <section aria-label="Day plans" className="space-y-4">
-        {trip.days.map((day) => (
-          <DayCard
-            key={day.id}
-            token={token}
-            day={day}
-            canEdit={permissions.canEditDays}
-            editorName={displayName}
-            requestName={requestName}
-            onCompleted={onCompleted}
+      {/* Mobile: Plan / Ideas tabs. lg+: days and side panel side by side (frontend-spec §3.3). */}
+      <div
+        role="tablist"
+        aria-label="Trip sections"
+        className="flex gap-1 rounded-xl bg-slate-100 p-1 lg:hidden dark:bg-slate-900"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileTab === 'plan'}
+          onClick={() => setMobileTab('plan')}
+          className={panelTab('plan')}
+        >
+          Plan
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileTab === 'ideas'}
+          onClick={() => setMobileTab('ideas')}
+          className={panelTab('ideas')}
+        >
+          Ideas
+        </button>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <section
+          aria-label="Day plans"
+          className={`space-y-4 ${mobileTab === 'plan' ? '' : 'hidden lg:block'}`}
+        >
+          {trip.days.map((day) => (
+            <DayCard
+              key={day.id}
+              token={token}
+              day={day}
+              canEdit={permissions.canEditDays}
+              editorName={displayName}
+              requestName={requestName}
+              onCompleted={onCompleted}
+            />
+          ))}
+        </section>
+        <aside
+          aria-label="Ideas"
+          className={`lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto ${
+            mobileTab === 'ideas' ? '' : 'hidden lg:block'
+          }`}
+        >
+          <SidePanel
+            destinationId={trip.destination.id}
+            excludeSlug={trip.slug}
+            days={permissions.canEditDays ? trip.days : undefined}
+            onAddPlace={permissions.canEditDays ? onAddPlace : undefined}
           />
-        ))}
-      </section>
+        </aside>
+      </div>
 
       {trip.links && (
         <ShareLinksDialog
@@ -249,6 +351,15 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
           links={trip.links}
           tripName={trip.name}
           justCreated={justCreated}
+          note={
+            justCreated && created?.emailedTo ? (
+              <Banner>We’ve emailed the organiser link to {created.emailedTo}.</Banner>
+            ) : justCreated && created?.emailFailed ? (
+              <Banner variant="warning">
+                We couldn’t send the email — please copy your organiser link now.
+              </Banner>
+            ) : null
+          }
         />
       )}
 
@@ -282,6 +393,19 @@ function TripWorkspace({ token, data }: { token: string; data: TripResponse }) {
         confirmLabel="Delete trip"
         destructive
         onConfirm={handleDelete}
+      />
+
+      {permissions.canEditTrip && (
+        <EditTripDialog open={editOpen} onOpenChange={setEditOpen} token={token} trip={trip} />
+      )}
+
+      <ConfirmDialog
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        title="Publish this trip?"
+        body="Anyone will be able to find it under Explore and read the plan. Its links stay private, and you can un-publish at any time."
+        confirmLabel="Publish"
+        onConfirm={() => handlePublish(true)}
       />
 
       <ConfirmDialog
