@@ -9,7 +9,7 @@
 |---------|---------------------|-----|
 | Language | **TypeScript** (strict mode) | Same language as the frontend; validation rules and types can be shared. |
 | Framework | **Hono** + `@hono/zod-openapi` | Tiny and fast. Runs on Cloudflare Workers, Node and Bun, so we can move hosts later. It also produces an OpenAPI description of the API from the code. |
-| Runtime / hosting | **Cloudflare Workers** (free plan) | No slow first request after idle time (meets the 2.5s load target). Same provider as the frontend on Pages. Generous free requests per day. |
+| Runtime / hosting | **Cloudflare Workers** (free plan) | No slow first request after idle time (meets the 2.5s load target). Same provider as the frontend, which is also served by a Worker with static assets. Generous free requests per day. |
 | Database | **PostgreSQL on Neon** (free plan) | Standard Postgres, so it can grow for a mass-market launch. It supports branches for testing. |
 | DB driver | **`postgres` (postgres.js)** over TCP (Workers `nodejs_compat`) | The same driver works with Neon and the local Docker Postgres; Neon's serverless driver would need an extra proxy locally. One short-lived connection per request. Cloudflare Hyperdrive can be added later for connection pooling. |
 | ORM / migrations | **Drizzle ORM + drizzle-kit** | Light and type-safe. |
@@ -152,11 +152,22 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 | count | integer | not null | |
 | expires_at | timestamptz | not null, indexed | |
 
+### 3.9 `trip_contributors` (goal Q25)
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| trip_id | uuid | FK → trips ON DELETE CASCADE | |
+| contributor_hash | text | not null | HMAC-SHA256(`EMAIL_HMAC_SECRET`, `"contributor:" + trip_id + ":" + lower(display name)`), hex. Never the name itself. |
+| first_seen_at | timestamptz | not null default now() | |
+| | | **PK (trip_id, contributor_hash)** | |
+
+Used only for the pilot metric (docs/pilot.md). It is never returned by the API.
+
 ### Relationships
 - `destinations` 1 — N `trips`
 - `trips` 1 — N `days` (exactly one per day of the trip)
 - `trips` 1 — N `delete_requests`
 - `trips` 1 — N `trip_slug_history`
+- `trips` 1 — N `trip_contributors`
 - `days` 1 — N `day_presence`
 - Deleting a trip removes its days, editing presence, delete requests and slug history (CASCADE).
 
@@ -166,7 +177,7 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 | **BR1 Codes** | Each trip gets three separate codes, each 32 bytes from a secure random source (`crypto.getRandomValues`), written in base64url (43 characters). If two codes ever clash (practically impossible), try again. Codes can't be changed in the MVP. | F2 |
 | **BR2 Name** | Trim the name and collapse repeated spaces; it must be 3–80 characters. `name_key = lower(name)`. A `name_key` that already exists means `409 TRIP_NAME_TAKEN`. Renaming follows the same rule. | F1, AC1.5 |
 | **BR3 Slug** | `slug` is the name turned into a URL-friendly form (letters, digits and dashes). Names are unique, so the slug is too; if it ever clashes, add `-2`, `-3` and so on. **The slug is regenerated when the trip is renamed.** The old slug is saved in `trip_slug_history`, and fetching it returns the trip together with `canonicalSlug`, so the frontend can redirect (QB9). When checking a new slug, both `trips.slug` and `trip_slug_history.old_slug` count as taken. **Live slugs take priority:** if a new trip's slug matches an old slug in the history, that history entry is deleted and its redirect stops working. | F4, AC5.3 |
-| **BR4 Dates** | "Today" is worked out in **AoE (UTC−12, "anywhere on earth")**, so it is never stricter than the user's local date. `from_date ≥ today(AoE)`; `to_date ≥ from_date`; at most 60 days, counting both ends. The same rules apply when editing the trip. | AC1.2–1.4, AC10.1 |
+| **BR4 Dates** | "Today" is worked out in **AoE (UTC−12, "anywhere on earth")**, so it is never stricter than the user's local date. `from_date ≥ today(AoE)`; `to_date ≥ from_date`; at most 60 days, counting both ends. The same rules apply when editing the trip, except that an unchanged past `from_date` is allowed (goal Q24). | AC1.2–1.4, AC10.1 |
 | **BR5 Day generation & date changes** | When a trip is created: insert positions 1…N with empty text. When the dates change to N′ days: if N′ > N, add empty days N+1…N′; if N′ < N, positions N′+1…N are removed. **Day content stays with its position**: Day 1 is still Day 1 when the trip moves to new dates (QB5). | F3, F8, AC1.7, AC10.2–10.4 |
 | **BR6 Confirming a shrink** | A `PATCH` that would remove days whose text isn't empty is rejected with `409 DAYS_WOULD_BE_REMOVED`, listing those days (`position`, `date`, a preview of the text). The client sends it again with `confirmRemoveDays: true`. | AC10.2 |
 | **BR7 Version check** | Saving a day runs `UPDATE days SET text=$t, version=version+1, updated_by_name=$n, updated_at=now() WHERE id=$id AND trip_id=$trip AND version=$v`. If no row changes, the day is fetched again and `409 DAY_VERSION_CONFLICT` is returned with it. Trip edits use the same pattern with `trips.version`. | AC2.4 |
@@ -179,6 +190,7 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 | **BR14 Delete & requests** | **Organiser delete:** removes the trip and everything under it (all codes then return `404`). **Delete request:** every request inserts its own `pending` row, and there's no limit on how many are pending (QB8). The trip response lists every pending request (`requestedByName`, `createdAt`), newest first. **Dismiss all:** sets every pending request to `dismissed`. **Approve:** the same as an organiser delete. | F7, AC7.1–7.3, AC8.1 |
 | **BR15 Publishing** | `is_published` can be set to true or false at any time by the organiser, including on Completed trips. `published_at` is set each time the trip is published. The directory and earlier-trips lists only ever include `is_published = true`. | F4, F6, AC5.x, AC4.1 |
 | **BR16 Text cleaning** | Stored as plain text, never as HTML. Unicode is normalised to NFC form; control characters other than `\n` and `\t` are removed; length is checked **after** normalising. The frontend shows it as plain text. | goal-spec §10 |
+| **BR18 Contributor count** | After a successful day save (E10), insert `(trip_id, contributor_hash)` and ignore it if it already exists. Recording failures are logged and never fail the save. The hash is keyed per trip, so the same name on two trips can't be linked. | goal §11, Q25 |
 | **BR17 Destination check** | `destinationId` must exist in `destinations`. Destinations are added to the table **only from Geoapify results returned by destination search** (E2), and updated by `(provider, provider_place_id)` if they already exist. Clients can't create arbitrary destinations; an unknown `destinationId` is a `400 VALIDATION_ERROR` on that field. | F1 |
 
 ## 5. Authentication & Authorization
@@ -275,6 +287,8 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 | `APP_PUBLIC_URL` | Frontend address used to build links in emails | Yes | `https://tripplanner.example` |
 | `CORS_ORIGIN` | Frontend address allowed by CORS | Yes | `https://tripplanner.example` |
 | `LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error` | No (`info`) | `info` |
+| `PROVIDER_MODE` | `live` calls Geoapify; `fake` serves built-in fixture destinations and places (local dev, tests). **Production: `live`.** | Yes | `fake` |
+| `EMAIL_MODE` | `live` sends through Resend; `log` only logs a redacted line, without the address. **Production: `live`.** | Yes | `log` |
 | `RATE_LIMIT_*` | Rate-limit bindings (configured in `wrangler.toml`) | Yes | — |
 
 ## 10. Migrations & Seeding
@@ -316,9 +330,11 @@ Used only for limits that Cloudflare's per-IP binding can't express, such as per
 - **CI (GitHub Actions):** Type check, lint, unit and integration tests (Postgres service container), then build. On `main`: run migrations, then `wrangler deploy`.
 
 ## 12. Deployment
+
+> Step-by-step setup, secrets, verification, rollback and restore are in [`docs/deployment.md`](../docs/deployment.md). The Worker refuses to serve in production when its configuration is unsafe (`apps/api/src/lib/config.ts`), and `/health` reports `config: error`.
 - **Hosting:**
   - API on **Cloudflare Workers** (`api.<domain>` or `*.workers.dev`).
-  - Frontend on **Cloudflare Pages**.
+  - Frontend on a **Cloudflare Worker with static assets** (`apps/web/wrangler.jsonc`).
   - Database on **Neon**.
   - Email through **Resend**.
 - **Environments:**

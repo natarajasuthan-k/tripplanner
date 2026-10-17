@@ -14,7 +14,7 @@ export function PagePlaceholder({
     <section className="space-y-3">
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       {children}
-      <p className="text-sm text-slate-500 dark:text-slate-400">Spec: {spec}</p>
+      <p className="text-sm text-slate-600 dark:text-slate-400">Spec: {spec}</p>
     </section>
   );
 }

@@ -124,7 +124,7 @@ Trip Planner keeps every trip detail in one place. Everyone opens it through a s
 - **AC9.2** Given a view-only link, when someone sends an edit request directly to the server, then it is rejected.
 
 ### US10 — Edit trip
-- **AC10.1** Given the organiser link, when the organiser changes the name, destination or dates, then the same rules as AC1.2–AC1.5 apply.
+- **AC10.1** Given the organiser link, when the organiser changes the name, destination or dates, then the same rules as AC1.2–AC1.5 apply. Exception: if the From Date is not being changed, a trip already under way may keep its past From Date (Q24).
 - **AC10.2** Given the date range is shortened and some removed days have content, when the organiser saves, then the days with content are listed and they are deleted only after the organiser confirms.
 - **AC10.3** Given the date range is extended, when the organiser saves, then empty day entries are added for the new dates.
 - **AC10.4** Given the trip is moved to different dates, when the organiser saves, then each day's details stay with its **day number** (Day 1 stays Day 1). Shortening removes days from the end.
@@ -186,7 +186,7 @@ Trip Planner keeps every trip detail in one place. Everyone opens it through a s
 
 ## 11. Success Metrics *(proposed)*
 - An organiser can create and share a trip in **≤ 1 minute**.
-- **≥ 80%** of created trips get edits from **2 or more** distinct contributors.
+- **≥ 80%** of created trips get edits from **2 or more** distinct contributors. Measured anonymously (Q25).
 - Each trip uses **≥ 1** place of interest from the suggestions.
 - **Zero** data-loss incidents during the 3-month pilot.
 - Hosting cost stays at **$0** for the pilot.
@@ -226,6 +226,8 @@ Trip Planner keeps every trip detail in one place. Everyone opens it through a s
 | Q21 | When the dates change, does day content follow day number or calendar date? | **Day number** (AC10.4). |
 | Q22 | Several delete requests on one trip? | **Keep them all.** The organiser sees every request and can Approve (delete) or Dismiss all (AC7.2–7.3). |
 | Q23 | What happens to a published trip's address after a rename? | **The address changes, and the old one redirects** (AC5.3). |
+| Q24 | Can a trip that has already started be edited (e.g. extended), given its From Date is now in the past? | **Yes.** The "From Date must be today or later" rule applies only when the From Date itself is changed. |
+| Q25 | How is "edited by 2+ people" (§11) measured without accounts? | **An anonymous contributor count.** Each day save records a one-way hash of the trip and the editor's display name (never the name itself), and the pilot counts distinct hashes per trip. People sharing a display name count once, so the result is a lower bound. |
 
 ## 14. Open Questions
 - None at present.

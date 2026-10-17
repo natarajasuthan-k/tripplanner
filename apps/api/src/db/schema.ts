@@ -160,3 +160,16 @@ export const rateCounters = pgTable(
   },
   (t) => [index('rate_counters_expires_idx').on(t.expiresAt)],
 );
+
+// §3.9 — anonymous contributor count for the pilot metric (BR18, goal Q25).
+export const tripContributors = pgTable(
+  'trip_contributors',
+  {
+    tripId: uuid('trip_id')
+      .notNull()
+      .references(() => trips.id, { onDelete: 'cascade' }),
+    contributorHash: text('contributor_hash').notNull(),
+    firstSeenAt: timestamptz('first_seen_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tripId, t.contributorHash] })],
+);

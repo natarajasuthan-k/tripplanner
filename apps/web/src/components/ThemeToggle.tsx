@@ -27,8 +27,8 @@ export function ThemeToggle() {
           onClick={() => setPreference(value)}
           className={`rounded-md p-1.5 ${
             preference === value
-              ? 'bg-teal-600 text-white dark:bg-teal-400 dark:text-slate-950'
-              : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              ? 'bg-teal-700 text-white dark:bg-teal-400 dark:text-slate-950'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
           }`}
         >
           <Icon className="size-4" aria-hidden />

@@ -1,6 +1,7 @@
 import { Plane } from 'lucide-react';
 import { Suspense } from 'react';
 import { Link, NavLink, Outlet } from 'react-router';
+import { OfflineBanner } from './OfflineBanner';
 import { ThemeToggle } from './ThemeToggle';
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -14,7 +15,8 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 export function AppShell() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+      <OfflineBanner />
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
         {/* Mobile: logo + theme on row 1, nav on row 2. sm+: single row. */}
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
@@ -33,7 +35,7 @@ export function AppShell() {
             </NavLink>
             <Link
               to="/new"
-              className="ml-auto rounded-lg bg-teal-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700 sm:ml-0 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300"
+              className="ml-auto rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 sm:ml-0 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300"
             >
               New trip
             </Link>
@@ -44,7 +46,7 @@ export function AppShell() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <Suspense fallback={<p className="text-slate-500">Loading…</p>}>
+        <Suspense fallback={<p className="text-slate-600 dark:text-slate-400">Loading…</p>}>
           <Outlet />
         </Suspense>
       </main>

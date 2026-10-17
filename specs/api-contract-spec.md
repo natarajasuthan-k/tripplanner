@@ -20,7 +20,7 @@
 | **Nulls** | Optional fields with no value are sent as `null`, never left out, unless this spec says a field is only included for some roles. |
 | **Pagination** | `?page=` (starts at 1, default 1) and `?limit=` (default 12, maximum 50). Response: `{ items, page, limit, total, hasMore }`. |
 | **Versioning** | URL prefix `/v1`. Adding a field doesn't change the version; removing or renaming anything means `/v2`. **Clients must ignore fields they don't recognise.** |
-| **Caching** | Responses to routes with a code: `Cache-Control: no-store`. Public lists: `Cache-Control: public, max-age=60`. Places: `public, max-age=3600`. |
+| **Caching** | Responses to routes with a code: `Cache-Control: no-store`. Public lists (E15): `Cache-Control: public, max-age=60`. A published trip (E16): `no-cache`, so un-publishing or deleting takes effect immediately for visitors. Places: `public, max-age=3600`. |
 | **Rate limits** | When a limit is hit: `429` plus a `Retry-After` header (seconds). Limits are in backend-spec §8. |
 | **CORS** | Only the frontend's address is allowed. No cookies or credentials. Allowed request headers: `Content-Type`, `X-Session-Id`, `X-Request-Id`, `If-None-Match`. Headers the browser may read: `ETag`, `X-Request-Id`, `Retry-After`. |
 | **Conditional GET** | E5 supports `ETag` / `If-None-Match` (see E5). |
@@ -273,9 +273,9 @@ The frontend builds the URLs itself: `/o/{organiserToken}`, `/e/{editToken}`, `/
 - **Auth:** None.
 - **Success response:** `200 OK`
 ```json
-{ "status": "ok", "db": "ok", "time": "2026-10-17T09:30:00.000Z" }
+{ "status": "ok", "db": "ok", "config": "ok", "time": "2026-10-17T09:30:00.000Z" }
 ```
-- **Error responses:** `503` with `{ "status": "degraded", "db": "error" }` (not the standard error shape; used only by monitoring).
+- **Error responses:** `503` with `{ "status": "degraded", "db": "error" | "ok", "config": "error" | "ok" }` when the database is unreachable or the configuration is invalid (details are only logged). Not the standard error shape; used only by monitoring. While the configuration is invalid, every other endpoint returns `500 INTERNAL_ERROR`.
 
 ---
 
@@ -430,7 +430,7 @@ Destination problems are reported as `400 VALIDATION_ERROR` on the `destinationI
 | `version` | int | Yes | The `trip.version` that was last loaded |
 | `name` | string | No | Same rules as E4 |
 | `destinationId` | uuid | No | Same rules as E4 |
-| `fromDate`, `toDate` | date | No | Same rules as E4, checked against the resulting pair of dates. If only one is sent, it is combined with the existing other date. |
+| `fromDate`, `toDate` | date | No | Same rules as E4, checked against the resulting pair of dates. If only one is sent, it is combined with the existing other date. An **unchanged** past `fromDate` is allowed, so a trip already under way can still be edited (goal Q24). |
 | `confirmRemoveDays` | boolean | No (default `false`) | Must be `true` to remove days that have text |
 
 At least one of `name`, `destinationId`, `fromDate` or `toDate` must be sent.
@@ -650,3 +650,4 @@ Sorted by `publishedAt` descending.
 |---------|------|--------|
 | 0.1 | 2026-10-17 | First draft. 17 endpoints, shared data types and error codes, matching goal v0.5, frontend v0.2 and backend v0.2. |
 | 0.2 | 2026-10-17 | Decisions QA1–QA3: codes go in the path; ETag and 304 on E5; `409 TRIP_COMPLETED`. |
+| 0.3 | 2026-10-17 | E16 uses `Cache-Control: no-cache` (was `max-age=60`): found by E2E — an un-published trip stayed visible from the browser cache. `/health` adds a `config` field. |

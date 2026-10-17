@@ -1,17 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../src/app';
-import type { Env } from '../src/env';
-
-const env: Env = {
-  DATABASE_URL: 'postgres://unused',
-  GEOAPIFY_API_KEY: 'test',
-  RESEND_API_KEY: 'test',
-  EMAIL_HMAC_SECRET: 'test-secret-test-secret-test-secret',
-  APP_PUBLIC_URL: 'http://localhost:5173',
-  CORS_ORIGIN: 'http://localhost:5173',
-  EMAIL_FROM: 'test@example.com',
-  LOG_LEVEL: 'error',
-};
+import { testEnv as env } from './helpers/env';
 
 describe('E1 GET /api/v1/health', () => {
   it('returns ok when the database answers', async () => {

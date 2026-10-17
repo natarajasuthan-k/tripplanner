@@ -5,6 +5,8 @@ import {
   DISPLAY_NAME_MAX,
   DISPLAY_NAME_MIN,
   EMAIL_MAX,
+  PAGE_LIMIT_DEFAULT,
+  PAGE_LIMIT_MAX,
   SEARCH_QUERY_MAX,
   SEARCH_QUERY_MIN,
   SESSION_ID_MAX,
@@ -63,13 +65,18 @@ export interface DateRange {
 
 export type DateRangeIssue = { field: 'fromDate' | 'toDate'; message: string };
 
-/** Returns rule violations for a trip date range; empty array means valid. */
+/**
+ * Returns rule violations for a trip date range; empty array means valid.
+ * `allowPastFrom`: when editing a trip whose From date is unchanged, a trip already under way may
+ * keep its past From date (goal Q24).
+ */
 export function validateDateRange(
   { fromDate, toDate }: DateRange,
   now: Date = new Date(),
+  opts: { allowPastFrom?: boolean } = {},
 ): DateRangeIssue[] {
   const issues: DateRangeIssue[] = [];
-  if (fromDate < todayAoE(now)) {
+  if (!opts.allowPastFrom && fromDate < todayAoE(now)) {
     issues.push({ field: 'fromDate', message: 'From date must be today or later' });
   }
   if (toDate < fromDate) {
@@ -98,6 +105,35 @@ export const createTripRequestSchema = z
     }
   });
 export type CreateTripRequest = z.input<typeof createTripRequestSchema>;
+
+/** E6 PATCH /trips/{token} — date rules are checked by the server against the resulting range. */
+export const updateTripRequestSchema = z
+  .object({
+    version: z.int().positive(),
+    name: tripNameSchema.optional(),
+    destinationId: z.uuid().optional(),
+    fromDate: isoDateSchema.optional(),
+    toDate: isoDateSchema.optional(),
+    confirmRemoveDays: z.boolean().optional().default(false),
+  })
+  .refine(
+    (v) =>
+      v.name !== undefined ||
+      v.destinationId !== undefined ||
+      v.fromDate !== undefined ||
+      v.toDate !== undefined,
+    { message: 'Nothing to change', path: ['_'] },
+  );
+export type UpdateTripRequest = z.input<typeof updateTripRequestSchema>;
+
+/** E15 GET /trips/published */
+export const publishedTripsQuerySchema = z.object({
+  q: searchQuerySchema.optional(),
+  destinationId: z.uuid().optional(),
+  excludeSlug: z.string().min(1).max(120).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(PAGE_LIMIT_MAX).default(PAGE_LIMIT_DEFAULT),
+});
 
 /** E10 PUT /trips/{token}/days/{dayId} */
 export const saveDayRequestSchema = z.object({

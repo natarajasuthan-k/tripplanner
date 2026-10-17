@@ -23,14 +23,14 @@ export interface ApiRequestInit extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
 
-export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
+/** Sends the request (adds X-Session-Id and JSON body); throws NETWORK_ERROR if unreachable. */
+export async function apiFetchRaw(path: string, init: ApiRequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   headers.set('X-Session-Id', getSessionId());
   if (init.body !== undefined) headers.set('Content-Type', 'application/json');
 
-  let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
+    return await fetch(`${API_BASE_URL}${path}`, {
       ...init,
       headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
@@ -38,15 +38,24 @@ export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Prom
   } catch {
     throw new ApiError(0, 'NETWORK_ERROR', "Can't reach the server. Check your connection.");
   }
+}
 
-  if (res.status === 204) return undefined as T;
-
+/** Converts a non-2xx response into an ApiError using the standard error body. */
+export async function toApiError(res: Response): Promise<ApiError> {
   const data: unknown = await res.json().catch(() => null);
-  if (!res.ok) {
-    if (isApiErrorBody(data)) {
-      throw new ApiError(res.status, data.error.code, data.error.message, data.error.details);
-    }
-    throw new ApiError(res.status, 'UNKNOWN_ERROR', 'Something went wrong. Please try again.');
+  if (isApiErrorBody(data)) {
+    return new ApiError(res.status, data.error.code, data.error.message, data.error.details);
   }
-  return data as T;
+  return new ApiError(res.status, 'UNKNOWN_ERROR', 'Something went wrong. Please try again.');
+}
+
+export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
+  const res = await apiFetchRaw(path, init);
+  if (res.status === 204) return undefined as T;
+  if (!res.ok) throw await toApiError(res);
+  return (await res.json()) as T;
+}
+
+export function isApiError(err: unknown, code?: ClientErrorCode): err is ApiError {
+  return err instanceof ApiError && (code === undefined || err.code === code);
 }

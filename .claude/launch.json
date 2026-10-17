@@ -6,6 +6,42 @@
       "runtimeExecutable": "corepack",
       "runtimeArgs": ["pnpm", "--filter", "@tripplanner/web", "dev"],
       "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "@tripplanner/api", "dev"],
+      "port": 8787
+    },
+    {
+      "name": "api-for-pages",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@tripplanner/api",
+        "exec",
+        "wrangler",
+        "dev",
+        "--var",
+        "CORS_ORIGIN:http://localhost:8788"
+      ],
+      "port": 8787
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@tripplanner/web",
+        "exec",
+        "wrangler",
+        "dev",
+        "--port",
+        "8788"
+      ],
+      "port": 8788
     }
   ]
 }
