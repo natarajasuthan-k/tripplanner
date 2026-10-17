@@ -1,0 +1,1100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="referrer" content="no-referrer" />
+<title>Trip Planner Atlas</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --panel-2: #f1f3f6; --ink: #14181f; --ink-2: #3d4654; --ink-3: #5b6676;
+  --line: #d9dee6; --accent: #0f766e; --accent-ink: #ffffff; --accent-soft: #ccfbf1;
+  --hl: #f59e0b; --hl-soft: #fef3c7; --danger: #b91c1c; --danger-soft: #fee2e2;
+  --warn: #a16207; --warn-soft: #fef9c3; --ok: #15803d; --ok-soft: #dcfce7;
+  --lane-frontend: #e0f2fe; --lane-contract: #ede9fe; --lane-edge: #ffedd5; --lane-api: #dcfce7;
+  --lane-data: #fce7f3; --lane-cicd: #e2e8f0; --lane-external: #fef9c3;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0f14; --panel: #121821; --panel-2: #1a2230; --ink: #e6edf5; --ink-2: #c1ccd9; --ink-3: #93a1b3;
+    --line: #2a3443; --accent: #2dd4bf; --accent-ink: #04211d; --accent-soft: #0f3b36;
+    --hl: #fbbf24; --hl-soft: #3a2c08; --danger: #f87171; --danger-soft: #3b1414;
+    --warn: #facc15; --warn-soft: #36300a; --ok: #4ade80; --ok-soft: #0f2e1a;
+    --lane-frontend: #0c2433; --lane-contract: #1e1838; --lane-edge: #33200d; --lane-api: #0f2a18;
+    --lane-data: #34121f; --lane-cicd: #1a2230; --lane-external: #2e2a0b;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0f14; --panel: #121821; --panel-2: #1a2230; --ink: #e6edf5; --ink-2: #c1ccd9; --ink-3: #93a1b3;
+  --line: #2a3443; --accent: #2dd4bf; --accent-ink: #04211d; --accent-soft: #0f3b36;
+  --hl: #fbbf24; --hl-soft: #3a2c08; --danger: #f87171; --danger-soft: #3b1414;
+  --warn: #facc15; --warn-soft: #36300a; --ok: #4ade80; --ok-soft: #0f2e1a;
+  --lane-frontend: #0c2433; --lane-contract: #1e1838; --lane-edge: #33200d; --lane-api: #0f2a18;
+  --lane-data: #34121f; --lane-cicd: #1a2230; --lane-external: #2e2a0b;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+code { background: var(--panel-2); padding: .05em .35em; border-radius: 4px; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0; }
+h2 { font-size: 1.35rem; margin-bottom: .35rem; }
+h3 { font-size: 1.02rem; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 20px; }
+.muted { color: var(--ink-3); }
+.small { font-size: .85rem; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+header.top { background: var(--panel); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-top: 22px; padding-bottom: 16px; }
+.title-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+.title-row h1 { font-size: 1.7rem; letter-spacing: -.01em; }
+.pitch { margin: .35rem 0 .9rem; color: var(--ink-2); max-width: 900px; }
+.theme-btn { margin-left: auto; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: .85rem; }
+.endpoints { display: flex; flex-wrap: wrap; gap: 8px; }
+.endpoint { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 10px; padding: 8px 12px; min-width: 0; text-decoration: none; color: var(--ink); }
+.endpoint b { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.endpoint span { font-family: var(--mono); font-size: .82rem; overflow-wrap: anywhere; }
+.endpoint:hover { border-color: var(--accent); }
+.status-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 10px; font-size: .78rem; border: 1px solid var(--line); background: var(--panel); }
+.pill.ok { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+.pill.warn { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+nav.toc { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+nav.toc .wrap { display: flex; gap: 4px; overflow-x: auto; padding-top: 6px; padding-bottom: 6px; scrollbar-width: thin; }
+nav.toc a { white-space: nowrap; text-decoration: none; color: var(--ink-2); font-size: .84rem; padding: 4px 10px; border-radius: 6px; }
+nav.toc a:hover { background: var(--panel-2); color: var(--ink); }
+
+section.block { padding: 26px 0 8px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.card.pad { padding: 16px 18px; }
+.lead { color: var(--ink-2); margin: 0 0 14px; max-width: 980px; }
+
+/* Flow tracer */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 14px; cursor: pointer; font: inherit; font-size: .88rem; }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.flow-panel { margin-top: 12px; display: none; }
+.flow-panel.show { display: block; }
+.flow-steps { margin: 8px 0 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 6px; }
+.flow-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; }
+.flow-steps li::before { counter-increment: step; content: counter(step); width: 24px; height: 24px; border-radius: 50%; background: var(--hl); color: #1a1200; font-weight: 700; font-size: .78rem; display: grid; place-items: center; }
+.flow-steps button { all: unset; cursor: pointer; color: var(--accent); font-weight: 600; }
+.flow-steps button:hover { text-decoration: underline; }
+
+/* Atlas grid */
+.atlas { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 18px; align-items: start; margin-top: 14px; }
+@media (max-width: 1100px) { .atlas { grid-template-columns: 1fr; } }
+.diagram { position: relative; padding: 10px; }
+.diagram svg.overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
+.lane { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+.lane:last-child { margin-bottom: 0; }
+@media (max-width: 640px) { .lane { grid-template-columns: 1fr; } }
+.lane-label b { display: block; font-size: .9rem; }
+.lane-label span { display: block; font-size: .76rem; color: var(--ink-3); }
+.lane-nodes { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
+.node { position: relative; z-index: 2; text-align: left; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 9px; padding: 7px 10px; cursor: pointer; font: inherit; min-width: 150px; max-width: 230px; box-shadow: var(--shadow); transition: opacity .15s, border-color .15s, transform .15s; }
+.node:hover { border-color: var(--accent); }
+.node .n-name { display: block; font-weight: 650; font-size: .88rem; }
+.node .n-tech { display: block; font-size: .74rem; color: var(--ink-3); }
+.node.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.diagram.flowing .node:not(.in-flow) { opacity: .35; }
+.node.in-flow { border-color: var(--hl); box-shadow: 0 0 0 2px var(--hl); }
+.node .badge { position: absolute; top: -9px; right: -9px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--hl); color: #1a1200; font-size: .72rem; font-weight: 800; display: none; place-items: center; }
+.node.in-flow .badge { display: grid; }
+.lane-frontend { background: var(--lane-frontend); } .lane-contract { background: var(--lane-contract); }
+.lane-edge { background: var(--lane-edge); } .lane-api { background: var(--lane-api); }
+.lane-data { background: var(--lane-data); } .lane-cicd { background: var(--lane-cicd); }
+.lane-external { background: var(--lane-external); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .78rem; color: var(--ink-3); margin: 8px 2px 0; }
+
+/* Inspector */
+aside.inspector { position: sticky; top: 52px; max-height: calc(100vh - 64px); overflow-y: auto; padding: 16px 18px; }
+@media (max-width: 1100px) { aside.inspector { position: static; max-height: none; } }
+.insp-empty { color: var(--ink-3); }
+.insp-head .kicker { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); }
+.insp-head h3 { font-size: 1.2rem; margin: 2px 0 2px; }
+.insp-head .tech { font-family: var(--mono); font-size: .8rem; color: var(--accent); }
+.insp-head p { margin: 8px 0 0; color: var(--ink-2); }
+.insp h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); margin: 16px 0 6px; }
+.insp ul { margin: 0; padding-left: 18px; }
+.insp li { margin: 3px 0; }
+.files { display: flex; flex-wrap: wrap; gap: 4px; }
+.files code { font-size: .74rem; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; vertical-align: top; padding: 7px 9px; border-bottom: 1px solid var(--line); }
+th { font-size: .76rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 650; background: var(--panel-2); position: sticky; top: 0; }
+.facts td:first-child { color: var(--ink-3); width: 38%; font-size: .85rem; }
+.facts td { font-size: .87rem; }
+.alt { border-left: 3px solid var(--line); padding: 4px 0 4px 10px; margin: 6px 0; }
+.alt b { display: block; }
+.qa details, .bank details { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: var(--panel-2); }
+.qa summary, .bank summary { cursor: pointer; font-weight: 600; }
+.qa details p, .bank details p { margin: 8px 0 2px; color: var(--ink-2); }
+.gotcha li::marker { content: "⚠ "; }
+.decision li::marker { content: "✔ "; color: var(--ok); }
+
+.table-wrap { overflow-x: auto; }
+.sev { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: .74rem; font-weight: 700; }
+.sev.High { background: var(--danger-soft); color: var(--danger); }
+.sev.Med { background: var(--warn-soft); color: var(--warn); }
+.sev.Low { background: var(--ok-soft); color: var(--ok); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.stat { display: flex; flex-direction: column; }
+.stat b { font-size: 1.6rem; line-height: 1.1; }
+.stat span { color: var(--ink-3); font-size: .82rem; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.bank-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.bank-tools input { flex: 1 1 260px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: inherit; }
+.bank h3 { margin: 18px 0 4px; }
+.bank .lvl { font-size: .7rem; font-weight: 700; border-radius: 5px; padding: 0 6px; margin-right: 6px; background: var(--accent-soft); color: var(--accent); vertical-align: 1px; }
+.tag { display: inline-block; font-size: .72rem; border: 1px solid var(--line); border-radius: 5px; padding: 0 6px; margin: 1px 3px 1px 0; color: var(--ink-2); }
+footer { padding: 30px 0 50px; color: var(--ink-3); font-size: .84rem; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="title-row">
+      <div>
+        <div class="muted small">Architecture atlas · natarajasuthan-k/tripplanner · main @ 9fd9167</div>
+        <h1>Trip Planner: architecture atlas</h1>
+      </div>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle colour theme">◐ Theme</button>
+    </div>
+    <p class="pitch">A group trip planner with no accounts. The organiser creates a trip and shares <b>capability links</b>: an organiser link, an edit link and a view-only link. Everyone plans day by day with autosave, editing indicators and conflict handling. The stack is a React SPA and a Hono API on Cloudflare Workers with Neon Postgres, built spec-first and running on free tiers.</p>
+    <div class="endpoints" id="endpoints"></div>
+    <div class="status-row">
+      <span class="pill ok">● Live in production (deployed from main by GitHub Actions)</span>
+      <span class="pill ok">CI: format · lint · typecheck · 181 unit/integration · 47 E2E</span>
+      <span class="pill warn">Pilot blockers: email domain not verified · uptime monitor not set</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <div class="wrap">
+    <a href="#business">Business context</a><a href="#flows">Flow tracer</a><a href="#atlas">Component diagram</a>
+    <a href="#endpoints-sec">API (E1–E17)</a><a href="#data">Data model</a><a href="#security">Security model</a>
+    <a href="#decisions">Decision log</a><a href="#stack">Stack</a><a href="#testing">Testing</a>
+    <a href="#risks">Risks &amp; gaps</a><a href="#runbook">Runbook</a><a href="#interview">Interview bank</a><a href="#history">Delivery history</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 1. BUSINESS CONTEXT ============ -->
+<section class="block" id="business">
+  <h2>Business context</h2>
+  <p class="lead">From <code>specs/goal-spec.md</code> (v0.5). <b>Problem:</b> when several people plan a trip, ideas scatter across chats, notes and spreadsheets, and one person ends up collecting everything by hand. <b>Answer:</b> one shared plan that anyone can open from a link. Nobody signs up.</p>
+  <div class="grid-2">
+    <div class="card pad">
+      <h3>Personas &amp; access</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Persona</th><th>Access</th><th>Can do</th></tr></thead>
+        <tbody>
+          <tr><td>Organiser</td><td><code>/o/:token</code></td><td>Everything: edit, publish, delete, handle delete requests, see all three links</td></tr>
+          <tr><td>Traveller</td><td><code>/e/:token</code></td><td>Edit days, copy edit/view links, request deletion</td></tr>
+          <tr><td>Viewer</td><td><code>/v/:token</code></td><td>Read only</td></tr>
+          <tr><td>Visitor</td><td><code>/explore/:slug</code></td><td>Read published trips; copy a plan</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card pad">
+      <h3>Goals &amp; success metrics (goal §4, §11)</h3>
+      <ul>
+        <li><b>G1:</b> create a trip in under 1 minute. <b>G2:</b> share by link with no accounts. <b>G3:</b> everyone edits day plans. <b>G4:</b> suggest places and earlier trips.</li>
+        <li><b>Metrics:</b> create and share in ≤ 1 minute · ≥ 80% of trips edited by 2+ people, counted anonymously through <code>trip_contributors</code> (Q25) · ≥ 1 suggested place per trip · zero data loss · $0 hosting.</li>
+        <li><b>Constraints:</b> free tiers only, a 3-month pilot, a tight budget and timeline. Out of scope: accounts, bookings, payments, live cursors.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card pad" style="margin-top:14px">
+    <h3>Feature catalogue</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>Feature</th><th>Phase</th><th>Where it lives</th></tr></thead>
+      <tbody id="featureRows"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ 2. FLOW TRACER ============ -->
+<section class="block" id="flows">
+  <h2>Flow tracer</h2>
+  <p class="lead">Pick a user or ops flow. The diagram below highlights each component it passes through, numbered in order and joined by a path. Click a step to inspect that component. Press <kbd>Esc</kbd> to clear.</p>
+  <div class="chips" id="flowChips" role="group" aria-label="Flows"></div>
+  <div class="card pad flow-panel" id="flowPanel" aria-live="polite"></div>
+</section>
+
+<!-- ============ 3+4. DIAGRAM + INSPECTOR ============ -->
+<section class="block" id="atlas">
+  <h2>Component diagram</h2>
+  <p class="lead">The components are grouped into lanes by tier. Click any component to open it in the inspector, which shows its technology, facts, the <b>why</b> behind its design, its sharp edges, the alternatives considered, and questions an owner should be able to answer.</p>
+  <div class="atlas">
+    <div class="card diagram" id="diagram">
+      <svg class="overlay" id="overlay" aria-hidden="true">
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--hl)"></path></marker></defs>
+        <path id="flowPath" fill="none" stroke="var(--hl)" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"></path>
+      </svg>
+      <div id="lanes"></div>
+      <div class="legend">Tip: open a component with <code>#c=&lt;id&gt;</code> or a flow with <code>#flow=&lt;id&gt;</code> in the URL. Both links are shareable.</div>
+    </div>
+    <aside class="card inspector" id="inspector" aria-live="polite"><p class="insp-empty">Select a component to inspect it.</p></aside>
+  </div>
+</section>
+
+<!-- ============ API CATALOGUE ============ -->
+<section class="block" id="endpoints-sec">
+  <h2>API catalogue (api-contract-spec v0.3)</h2>
+  <p class="lead">Base path <code>/api/v1</code>. The access code is a <b>path segment</b> (QA1). Errors use one shape, <code>{ error: { code, message, details } }</code>, with 11 codes. Checks run in this order: 404 → 403 → 400 → 409. Route files are in <code>apps/api/src/routes/</code>. The generated OpenAPI document is at <code>/api/v1/openapi.json</code>.</p>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>#</th><th>Method &amp; path</th><th>Access</th><th>File</th><th>Notes</th></tr></thead>
+    <tbody id="endpointRows"></tbody>
+  </table></div>
+</section>
+
+<!-- ============ DATA MODEL ============ -->
+<section class="block" id="data">
+  <h2>Data model</h2>
+  <p class="lead">Defined in Drizzle (<code>apps/api/src/db/schema.ts</code>). Migrations are generated into <code>apps/api/src/db/migrations/</code> (<code>0000_init.sql</code>, <code>0001_trip_contributors.sql</code>). IDs are UUID v7 (<code>lib/ids.ts</code>). Production runs Neon Postgres 18.6; local development and CI use Postgres 17.</p>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Table</th><th>Key columns</th><th>Constraints / why</th></tr></thead>
+    <tbody id="tableRows"></tbody>
+  </table></div>
+</section>
+
+<!-- ============ SECURITY ============ -->
+<section class="block" id="security">
+  <h2>Security &amp; privacy model</h2>
+  <div class="grid-2">
+    <div class="card pad"><h3>Capability links instead of accounts</h3><ul>
+      <li>Every trip has 3 codes, each 32 random bytes encoded as 43-character base64url (<code>randomToken()</code>, BR1). Guessing one is infeasible.</li>
+      <li>One indexed lookup across all three columns gives the trip and the role (<code>middleware/tripAccess.ts</code>). An unknown code returns <b>404, never 401</b>, so trip existence never leaks.</li>
+      <li>The role is checked on the server for every route (<code>requireRole</code>, which runs before body validation). The UI only hides controls.</li>
+    </ul></div>
+    <div class="card pad"><h3>Personal data</h3><ul>
+      <li>Organiser email: only <code>HMAC-SHA256(EMAIL_HMAC_SECRET, email)</code> is stored (BR11). The address is used once to send, never logged or returned.</li>
+      <li>Contributor metric: a per-trip HMAC of the display name, never the name itself (BR18).</li>
+      <li>Recovery always answers <code>202</code> with the same body, is rate-limited, and sends email in the background (BR12). This prevents email enumeration.</li>
+    </ul></div>
+    <div class="card pad"><h3>Transport &amp; browser</h3><ul>
+      <li>CSP is generated at build time (<code>apps/web/tooling/securityHeaders.ts</code>): the inline theme script is pinned by hash, <code>connect-src</code> is limited to the API origin, and <code>frame-ancestors 'none'</code>.</li>
+      <li><code>Referrer-Policy: no-referrer</code> on the web app and the API, so codes don't leak to outside links. CORS allows a single origin with no cookies, so no CSRF surface.</li>
+      <li>Responses to routes with a code are <code>no-store</code>; the published trip (E16) is <code>no-cache</code>.</li>
+    </ul></div>
+    <div class="card pad"><h3>Abuse &amp; configuration</h3><ul>
+      <li>Per-IP limits per minute come from Workers Rate Limiting bindings; hourly limits use DB counters (<code>rate_counters</code>).</li>
+      <li><code>lib/config.ts</code> fails closed. Production refuses fake providers, log-only email, non-HTTPS origins and placeholder or short secrets.</li>
+      <li>Logs record the <b>route pattern</b>, never the raw path, so access codes, emails and day text never reach them (<code>requestContext.ts</code>).</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============ DECISION LOG ============ -->
+<section class="block" id="decisions">
+  <h2>Decision log: what was chosen and why</h2>
+  <p class="lead">Collected from the Decision Log tables in the four specs. Q = goal-spec, Q-F = frontend, QB = backend, QA = API contract.</p>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Ref</th><th>Decision</th><th>Choice</th><th>Why</th></tr></thead>
+    <tbody id="decisionRows"></tbody>
+  </table></div>
+</section>
+
+<!-- ============ STACK ============ -->
+<section class="block" id="stack">
+  <h2>Stack at a glance</h2>
+  <p class="lead">Versions are the ranges declared in each <code>package.json</code> (pnpm@10.34.7, Node ≥ 22; CI uses <code>.nvmrc</code> = 24).</p>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Technology</th><th>Version</th><th>Where</th><th>Why it was picked</th></tr></thead>
+    <tbody id="stackRows"></tbody>
+  </table></div>
+</section>
+
+<!-- ============ TESTING ============ -->
+<section class="block" id="testing">
+  <h2>Testing strategy</h2>
+  <div class="stats">
+    <div class="card pad stat"><b>21</b><span>shared (Vitest)</span></div>
+    <div class="card pad stat"><b>96</b><span>API (Vitest against real Postgres)</span></div>
+    <div class="card pad stat"><b>64</b><span>web (Vitest + Testing Library)</span></div>
+    <div class="card pad stat"><b>47</b><span>Playwright E2E (desktop + Pixel 7)</span></div>
+    <div class="card pad stat"><b>14</b><span>axe accessibility checks (7 pages × 2 themes)</span></div>
+  </div>
+  <div class="grid-2" style="margin-top:14px">
+    <div class="card pad"><h3>Layers</h3><ul>
+      <li><b>Shared:</b> date rules in AoE, slugs, text cleaning, the permission matrix (<code>packages/shared/test</code>).</li>
+      <li><b>API:</b> integration tests use <code>app.request()</code> against a truncated <code>tripplanner_test</code> database. Concurrency is covered (two parallel saves → exactly one 200 and one 409), as are email privacy, ranking and config.</li>
+      <li><b>Web:</b> the autosave state machine with fake timers; page tests drive a small in-test fake <code>fetch</code> (<code>src/test/fakeApi.ts</code>) instead of MSW.</li>
+      <li><b>E2E:</b> <code>e2e/playwright.config.ts</code> boots <code>wrangler dev</code> and Vite against <code>tripplanner_e2e</code> with fixed seed codes.</li>
+    </ul></div>
+    <div class="card pad"><h3>Bugs the tests caught</h3><ul>
+      <li>A trip deleted while open stayed visible, because the 404 was ignored when cached data existed.</li>
+      <li>The "email sent" note vanished once <code>?created</code> was dropped, which wiped the navigation state.</li>
+      <li>WCAG AA contrast failures: teal-600 buttons and slate-500 text.</li>
+      <li>Un-publishing was delayed by the 60-second cache on E16.</li>
+      <li>LIKE wildcards weren't escaped in Explore search.</li>
+      <li>Flaky E2E: substring text matches, and Radix toasts appearing twice.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============ RISKS ============ -->
+<section class="block" id="risks">
+  <h2>Known risks &amp; gaps</h2>
+  <p class="lead">Real issues found while building and reading the code. Severity reflects the 3-month pilot, not a mass launch.</p>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Severity</th><th>Risk</th><th>Evidence</th><th>Mitigation / next step</th></tr></thead>
+    <tbody id="riskRows"></tbody>
+  </table></div>
+</section>
+
+<!-- ============ RUNBOOK ============ -->
+<section class="block" id="runbook">
+  <h2>Runbook</h2>
+  <p class="lead">Commands come from the root and package <code>package.json</code> scripts, <code>docker-compose.yml</code>, and <code>docs/deployment.md</code>. Run them from the repo root unless noted. Locally pnpm runs through corepack (<code>corepack pnpm …</code>).</p>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Area</th><th>Command</th><th>What it does</th></tr></thead>
+    <tbody id="runbookRows"></tbody>
+  </table></div>
+</section>
+
+<!-- ============ INTERVIEW BANK ============ -->
+<section class="block" id="interview">
+  <h2>Interview question bank</h2>
+  <p class="lead">Questions an interviewer, reviewer or new maintainer might ask, grouped by area. Each answer reflects this codebase. Levels: <b>L1</b> fundamentals, <b>L2</b> design reasoning, <b>L3</b> trade-offs and failure modes.</p>
+  <div class="card pad bank">
+    <div class="bank-tools">
+      <input id="bankSearch" type="search" placeholder="Filter questions (e.g. ETag, CSP, autosave, Neon)…" aria-label="Filter interview questions" />
+      <button class="chip" type="button" id="expandAll">Expand all</button>
+      <button class="chip" type="button" id="collapseAll">Collapse all</button>
+    </div>
+    <div class="chips" id="bankCats" role="group" aria-label="Question areas"></div>
+    <div id="bankList"></div>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section class="block" id="history">
+  <h2>Delivery history</h2>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Step</th><th>What changed</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Specs</td><td>goal v0.5 · frontend v0.2 · backend v0.2 · api-contract v0.3</td><td>Questions were decided one by one and recorded in each spec's decision log.</td></tr>
+      <tr><td>Phase 1 (<code>a1bfedb</code>, <code>b4e09fa</code>)</td><td>Create, links, autosave and presence, delete requests, device trips, guide</td><td>The core MVP.</td></tr>
+      <tr><td>Phase 2 (<code>67aa6b9</code>, <code>789ffa0</code>)</td><td>Publish and Explore, places, earlier trips, edit trip, email recovery, copy plan</td><td>Discovery features.</td></tr>
+      <tr><td>Phase 3 (<code>2983641</code> … <code>aca056e</code>)</td><td>Production config guard, CSP, deploy and backup workflows, E2E, contributor metric, Workers static assets</td><td>Pilot readiness.</td></tr>
+      <tr><td>PR #1 (<code>15bc90e</code>)</td><td>Merged MVP; first production deploy</td><td>Smoke test passed: health OK with database and configuration.</td></tr>
+      <tr><td>PR #2 (<code>1f44bc7</code>)</td><td>Ranked places; merged duplicate destinations</td><td>Found on live data: Chennai showed parks, and Kyoto appeared twice.</td></tr>
+      <tr><td>PR #3 (<code>5998a14</code>)</td><td>One Geoapify request per crowded category</td><td>Beach ranking is still a known issue (deferred).</td></tr>
+      <tr><td>PR #4 (<code>9fd9167</code>)</td><td>Backup detects the server's Postgres major version</td><td>Neon runs Postgres 18.6; the 17 client failed with a version mismatch.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+
+<footer><div class="wrap">Generated from the repository at <code>main @ 9fd9167</code>. Source of truth: <code>specs/*.md</code> and the code paths cited in each component. This file is self-contained and makes no network requests.</div></footer>
+
+<script>
+'use strict';
+// ---------------------------------------------------------------------------------------------
+// DATA
+// ---------------------------------------------------------------------------------------------
+const ENDPOINTS = [
+  ['App URL', 'https://tripplanner.natarajasuthan.workers.dev'],
+  ['API URL', 'https://tripplanner-api.natarajasuthan.workers.dev/api/v1'],
+  ['Health', 'https://tripplanner-api.natarajasuthan.workers.dev/api/v1/health'],
+  ['OpenAPI', 'https://tripplanner-api.natarajasuthan.workers.dev/api/v1/openapi.json'],
+  ['Cloudflare', 'https://dash.cloudflare.com/', 'workers.dev subdomain: natarajasuthan'],
+  ['GitHub repo', 'https://github.com/natarajasuthan-k/tripplanner'],
+  ['Actions', 'https://github.com/natarajasuthan-k/tripplanner/actions'],
+];
+
+const LANES = [
+  { id: 'frontend', label: 'Frontend', desc: 'React SPA in the browser' },
+  { id: 'contract', label: 'Shared contract', desc: 'packages/shared · specs' },
+  { id: 'edge', label: 'Cloudflare edge', desc: 'Static assets, limits, cron' },
+  { id: 'api', label: 'API (Workers)', desc: 'tripplanner-api · Hono' },
+  { id: 'data', label: 'Data & secrets', desc: 'Neon · Drizzle · secrets' },
+  { id: 'cicd', label: 'CI/CD & ops', desc: 'GitHub Actions · local dev' },
+  { id: 'external', label: 'External services', desc: 'Geoapify · Resend' },
+];
+
+const C = [
+  // ---------------- FRONTEND ----------------
+  { id: 'web-shell', lane: 'frontend', name: 'SPA shell & router', tech: 'React 19.3 · React Router 8.4 · Vite 8.3 · Tailwind 4.3',
+    summary: 'Single-page app with lazy routes and app-wide providers (TanStack Query, theme, toasts). One page component serves all three link types.',
+    files: ['apps/web/src/main.tsx', 'apps/web/src/App.tsx', 'apps/web/src/routes.tsx', 'apps/web/src/components/AppShell.tsx', 'apps/web/index.html'],
+    facts: [['Routes', '/, /new, /o|/e|/v/:token, /explore, /explore/:slug, /recover, /how-it-works, *'], ['Bundle', 'Main JS ≈ 119 KB gzipped (budget 150 KB, frontend §8)'], ['Providers', 'QueryClientProvider → ThemeProvider → ToastProvider → RouterProvider'], ['Theme', 'Inline pre-paint script reads tp.theme; Tailwind dark: class variant'], ['Errors', 'RouteError boundary, NotFoundView, OfflineBanner']],
+    decisions: ['A separate SPA plus API instead of a full-stack framework (Q11/Q-F4): free static hosting and a clean contract boundary, enforced by the specs.', 'One TripPage for /o, /e and /v. The server-reported role decides the UI, so the URL prefix is only a hint.', 'Each route is a lazy chunk, which keeps the first load inside the performance budget.', 'Published trips are addressed by slug (/explore/:slug), never by a code, so the directory can never leak links.'],
+    gotchas: ['React Router 8 was installed instead of the 7 the spec named. The spec was updated.', 'The first test in each file compiles the lazy chunks, so test timeouts were raised (asyncUtilTimeout 30s, testTimeout 60s).', 'routes.tsx is exempt from the react-refresh lint rule because it is a route table, not a component module.'],
+    alternatives: [['Next.js (SSR)', 'Better SEO for Explore and server rendering, but couples frontend and backend and pushes towards Vercel. SEO is not a pilot goal.'], ['Astro / static site', 'Great for content, but the app is a highly interactive workspace.'], ['React Router framework mode', 'Adds loaders and actions, but the app already uses TanStack Query for server state.']],
+    qa: [['Why not server-side rendering?', 'The audience is small groups reaching the app by link; SEO isn\'t a goal (goal §5). A static SPA hosts for free on Workers static assets. SSR could be added later for /explore only.'], ['How are three roles served by one page?', 'GET /trips/{token} returns access.role and a permissions object, and the page renders from that. The server re-checks every write (AC9.2).']] },
+
+  { id: 'trip-workspace', lane: 'frontend', name: 'Trip workspace & autosave', tech: 'useDayAutosave · usePresence · TanStack Query polling',
+    summary: 'The collaborative core: autosaving day cards with version checks, an "is editing" indicator, a conflict panel, local drafts and an unsaved-changes guard.',
+    files: ['apps/web/src/pages/TripPage.tsx', 'apps/web/src/features/trip/useDayAutosave.ts', 'apps/web/src/features/trip/DayCard.tsx', 'apps/web/src/features/trip/usePresence.ts', 'apps/web/src/features/trip/unsaved.ts', 'apps/web/src/features/trip/dayActions.ts', 'apps/web/src/features/trip/SidePanel.tsx'],
+    facts: [['Autosave', '1000 ms after the last keystroke, plus an immediate save on blur; one save in flight per day'], ['Retries', '2s → 5s → 10s, then "Not saved — Retry"; resumes on the browser online event'], ['Presence', 'Heartbeat every 15s (E11), TTL 30s, cleared on blur (E12)'], ['Sync', 'Polls E5 every 10s while visible, with If-None-Match/ETag'], ['Drafts', 'localStorage tp.draft.<dayId> until the save is acknowledged'], ['Conflict', '409 DAY_VERSION_CONFLICT → panel with Keep mine / Use theirs / Copy mine']],
+    decisions: ['Autosave plus a soft "is editing" warning, not locks (Q15/Q16). Locks block people; conflicts are rare in small groups.', 'Optimistic concurrency on a per-day version (BR7) instead of CRDTs or WebSockets. Simple, and works on the free tier with plain HTTP.', 'Saves are not optimistic in the UI: the page waits for the server so conflicts appear before anything is shown.', '"Add to plan" goes through an event bus (dayActions.ts) into the same day\'s autosave, so it passes the same version check.', 'A 404 during polling wins over cached data, so a trip deleted while open switches to "Trip not found".'],
+    gotchas: ['React Compiler lint: refs are updated in useLayoutEffect, and save re-invokes itself through saveRef (no self-reference).', 'The ?created state is captured once with useState. Dropping the query parameter replaces the history entry and its state; this was a real bug, caught in the browser.', 'Polling stops in background tabs (refetchIntervalInBackground: false). A hidden tab only notices a deletion when it is focused again.', 'Session IDs are per tab and kept in memory, so the same person in two tabs appears as two editors.'],
+    alternatives: [['Yjs/Automerge with Durable Objects and WebSockets', 'True real-time merging without conflicts, but much more complex. Durable Objects and long-lived sockets go beyond the free plan.'], ['Explicit Save button', 'Simpler, with fewer conflict prompts, but people lose work and it feels dated. The user chose autosave.'], ['Hard locks', 'No conflicts at all, but an abandoned tab blocks the group until the lock expires.']],
+    qa: [['What happens when two people save the same day?', 'The second PUT carries a stale version, so the UPDATE … WHERE version=$v matches 0 rows. The API returns 409 with details.current, autosave pauses for that day, and the user chooses Keep mine (resend against the latest version) or Use theirs.'], ['What if the network drops mid-edit?', 'The draft stays in localStorage. Autosave retries at 2s, 5s and 10s, then shows Retry, and resumes automatically on the online event. A beforeunload and router blocker warns before leaving with unsaved text.'], ['Why poll instead of using WebSockets?', 'Free hosting, plain HTTP and few users: 10-second polling with ETag/304 is enough for a planning app. Five people on one trip make about 1,800 requests an hour, well under 100k a day.']] },
+
+  { id: 'create-flow', lane: 'frontend', name: 'Trip forms', tech: 'React Hook Form 7.90 · Zod 4.6 · ARIA combobox',
+    summary: 'Create, copy and edit forms sharing one TripForm. A debounced destination combobox; server errors mapped back onto fields.',
+    files: ['apps/web/src/features/create/TripForm.tsx', 'apps/web/src/features/create/DestinationAutocomplete.tsx', 'apps/web/src/pages/CreateTripPage.tsx', 'apps/web/src/features/trip/EditTripDialog.tsx'],
+    facts: [['Modes', 'create | copy (?from=slug) | edit'], ['Rules', 'Name 3–80 characters; From date ≥ today (AoE); To date ≥ From date; ≤ 60 days; optional email up to 254 characters'], ['Combobox', 'Waits 300 ms after typing, needs at least 2 characters, keyboard arrows, aria-activedescendant'], ['Edit', '409 DAYS_WOULD_BE_REMOVED → ShrinkDatesConfirm → resend with confirmRemoveDays']],
+    decisions: ['The destination must be picked from provider results (BR17), so "earlier trips to the same destination" matches by ID rather than fuzzy text.', 'Rules live in packages/shared, so the form and the server agree; the server stays the final word.', 'An unchanged past From date is allowed when editing (Q24), so a trip already under way can be extended.'],
+    gotchas: ['getByLabel(\'To\') also matched the "Earlier trips to Kyoto" aside. E2E now uses exact selectors.', 'Server field names differ (destinationId → destination) and are mapped by hand.'],
+    alternatives: [['Free-text destination', 'Simpler, but "Paris" and "paris, france" wouldn\'t match, breaking F6.'], ['Formik / plain inputs', 'Formik is heavier; React Hook Form plus a Zod resolver reuses the shared schemas.']],
+    qa: [['Why is "today" in AoE (UTC−12)?', 'So validation is never stricter than the user\'s own local date anywhere in the world (BR4).'], ['How does copy mode work?', 'It fetches E16 for the slug, pre-fills the destination and the same number of days from today, warns when fewer days will be copied, then POSTs E4 with copyFromSlug.']] },
+
+  { id: 'public-pages', lane: 'frontend', name: 'Public pages', tech: 'Explore · Published trip · Recover · How it works',
+    summary: 'The published directory with search and "Load more", read-only published trips with Copy, the "Forgot my link" page, and the guide.',
+    files: ['apps/web/src/pages/ExplorePage.tsx', 'apps/web/src/pages/PublishedTripPage.tsx', 'apps/web/src/pages/RecoverPage.tsx', 'apps/web/src/pages/HowItWorksPage.tsx', 'apps/web/src/pages/HomePage.tsx', 'apps/web/src/features/published/api.ts'],
+    facts: [['Explore', 'useInfiniteQuery; search waits 300 ms after typing; page size 12'], ['Old slugs', 'If canonicalSlug ≠ the URL slug, the URL is replaced (AC5.3)'], ['Recover', 'Always shows the same message (AC12.4)'], ['Home', 'Recently published (6), How it works, Your trips on this device']],
+    decisions: ['The directory never exposes access codes, only slugs.', 'Recovery gives the same response for known and unknown emails, which prevents enumeration.', 'The guide and first-visit role tips exist because the three-link model has to be explained without accounts (F13).'],
+    gotchas: ['E16 originally sent max-age=60, so un-publishing lagged in browsers. Found by E2E; now no-cache (contract v0.3).', 'A live slug evicts any old-slug redirect with the same value (QB9).'],
+    alternatives: [['Search engine / Algolia', 'Overkill: Postgres ILIKE with escaped wildcards is enough at pilot scale.']],
+    qa: [['How do you stop the directory leaking edit links?', 'E16 returns PublicTripView: no links field, no version, and editors always []. A test asserts the HTML contains no codes.']] },
+
+  { id: 'device-storage', lane: 'frontend', name: 'Device storage', tech: 'localStorage (try/catch wrapped)',
+    summary: 'Per-browser memory that stands in for accounts: trips opened on this device, display name, theme, dismissed tips and unsaved drafts.',
+    files: ['apps/web/src/lib/storage.ts', 'apps/web/src/lib/myTrips.ts', 'apps/web/src/lib/preferences.ts', 'apps/web/src/lib/session.ts'],
+    facts: [['Keys', 'tp.myTrips (≤ 50) · tp.displayName · tp.theme · tp.tipsSeen · tp.draft.<dayId>'], ['Session', 'Per-tab session ID kept in memory, sent as X-Session-Id'], ['Hub', '"Your trips on this device" on Home (F11, Q20)']],
+    decisions: ['No accounts (Q1), so the device list is the hub, with optional email recovery for other devices (Q12/F10).', 'All access is wrapped in try/catch, because storage can throw in private mode.'],
+    gotchas: ['tp.myTrips stores raw codes, including organiser codes. Anyone using the same browser profile can open them.', 'Clearing site data loses the organiser link unless an email was given.'],
+    alternatives: [['Magic-link accounts', 'Recover trips on any device, but adds auth, sessions and stored email (it was offered as "My trips by email" and declined).'], ['IndexedDB', 'Unnecessary for a few KB of data.']],
+    qa: [['What if an organiser loses their link?', 'Check the device list; otherwise use /recover, which only works if they gave an email at creation.']] },
+
+  { id: 'api-client', lane: 'frontend', name: 'API client & query cache', tech: 'fetch · TanStack Query 5.104 · ETag',
+    summary: 'A thin fetch wrapper that adds X-Session-Id, maps the standard error body to ApiError, and handles 304 with a per-trip ETag map.',
+    files: ['apps/web/src/lib/api.ts', 'apps/web/src/features/trip/api.ts', 'apps/web/src/lib/queryClient.ts'],
+    facts: [['Base URL', 'VITE_API_BASE_URL (production) or /api/v1, which Vite forwards to :8787 locally'], ['Retries', 'Reads retry twice on non-4xx errors; mutations never retry automatically'], ['Error codes', 'ErrorCode from shared, plus NETWORK_ERROR and UNKNOWN_ERROR'], ['ETag', 'fetchTrip sends If-None-Match; on 304 it returns the cached TripResponse']],
+    decisions: ['Conditional GET (QA2) to save bandwidth on the 10-second poll.', 'No cookies, so no CSRF; the capability travels in the path.'],
+    gotchas: ['A 304 still costs a Worker request and a database query; it only saves bytes.', 'setCachedDay deletes the ETag, because the local cache no longer matches the server\'s body.', 'DevTools shows manually handled 304s as ERR_ABORTED. This is harmless.', 'Cloudflare answers 403 to Python urllib\'s default user agent, so scripts must set one.'],
+    alternatives: [['A client generated from OpenAPI or tRPC', 'Stronger typing end to end. Shared Zod types already cover most of it.'], ['SWR', 'Similar; TanStack Query has better mutation and infinite-query support.']],
+    qa: [['How does 304 work when the API sends no-store?', 'The browser doesn\'t cache, so the client stores the ETag and body itself and sets If-None-Match by hand; fetch then passes the 304 through to JavaScript.']] },
+
+  // ---------------- CONTRACT ----------------
+  { id: 'shared-pkg', lane: 'contract', name: '@tripplanner/shared', tech: 'TypeScript source package · Zod 4.6',
+    summary: 'The single source of truth for limits, error codes, date and text rules, request schemas, response types and the permission matrix.',
+    files: ['packages/shared/src/constants.ts', 'packages/shared/src/errors.ts', 'packages/shared/src/dates.ts', 'packages/shared/src/text.ts', 'packages/shared/src/schemas.ts', 'packages/shared/src/api.ts'],
+    facts: [['Limits', 'TRIP_NAME 3–80 · DAY_TEXT_MAX 5000 · TRIP_MAX_DAYS 60 · PRESENCE_TTL 30s · TRIP_POLL 10s'], ['Tokens', 'TOKEN_PATTERN /^[A-Za-z0-9_-]{43}$/'], ['Packaging', 'exports ./src/index.ts directly; "sideEffects": false'], ['Key helpers', 'permissionsFor, validateDateRange, todayAoE, slugify, sanitizeDayText']],
+    decisions: ['A monorepo with a shared package (QB7), so the frontend form and the API validator can\'t drift apart.', 'Ships TS source with no build step; Vite and Wrangler (esbuild) both compile it.', '"sideEffects": false let Vite drop the unused Zod schemas: −24 KB gzipped from the main bundle.'],
+    gotchas: ['Plain Zod schemas have no .openapi() at runtime, so route parameters use z from @hono/zod-openapi.', 'Schemas with transforms (trim, NFC) have different input and output types: use z.input for requests.'],
+    alternatives: [['Separate repos with types generated from OpenAPI', 'More separation, but slower to change and harder to keep in step.']],
+    qa: [['Where does the permission matrix live, and why there?', 'permissionsFor(role, completed) in schemas.ts. The API uses it to build access.permissions and the UI uses it in tests, so there is one definition.']] },
+
+  { id: 'specs', lane: 'contract', name: 'Specs & docs', tech: 'specs/*.md · docs/*.md',
+    summary: 'A spec-first workflow: goal, frontend, backend and API-contract specs with decision logs, plus a deployment runbook and pilot plan.',
+    files: ['specs/goal-spec.md', 'specs/frontend-spec.md', 'specs/backend-spec.md', 'specs/api-contract-spec.md', 'docs/deployment.md', 'docs/pilot.md', 'README.md'],
+    facts: [['Versions', 'goal v0.5 · frontend v0.2 · backend v0.2 · contract v0.3'], ['IDs', 'F1–F13, US1–US16, AC1.1–AC16.4, BR1–BR18, E1–E17'], ['Decision logs', 'Q1–Q25, Q-F1–Q-F10, QB1–QB11, QA1–QA3']],
+    decisions: ['Decisions were asked one by one and recorded with the reason.', 'IDs are cited in code comments and test names (e.g. "(AC2.4)") for traceability.', 'When reality differed (Pages→Workers assets, postgres.js, MSW→fake fetch), the spec was updated in the same PR.'],
+    gotchas: ['Specs can still drift. Each PR touched the spec where behaviour changed, but nothing enforces it automatically.'],
+    alternatives: [['ADRs per decision', 'More granular history; the decision-log tables kept everything in four files.']],
+    qa: [['How do you keep specs and code in sync?', 'The spec changes first, IDs are cited in code and tests, and each PR description names the spec sections it touches.']] },
+
+  // ---------------- EDGE ----------------
+  { id: 'web-worker', lane: 'edge', name: 'Web Worker (static assets)', tech: 'Cloudflare Workers static assets · wrangler 4.151',
+    summary: 'Serves the built SPA from apps/web/dist with SPA fallback, and applies the build-generated _headers (CSP and security headers).',
+    files: ['apps/web/wrangler.jsonc', 'apps/web/tooling/securityHeaders.ts', 'apps/web/vite.config.ts'],
+    facts: [['Name', 'tripplanner → tripplanner.natarajasuthan.workers.dev'], ['Fallback', 'not_found_handling: "single-page-application"'], ['CSP', "script-src 'self' 'sha256-…'; connect-src 'self' <API origin>; frame-ancestors 'none'"], ['Caching', '/assets/* public, max-age=31536000, immutable']],
+    decisions: ['Workers static assets instead of Pages (Q-F10): the Cloudflare account created the site that way; _headers and fallback behave the same.', 'CSP is generated at build time so connect-src matches VITE_API_BASE_URL and the inline theme script is pinned by hash, with no unsafe-inline for scripts.', "style-src 'unsafe-inline' is required because Radix's scroll lock injects a <style> element."],
+    gotchas: ['The plugin originally lived in apps/web/build/, which .gitignore ignores; CI would have failed. It moved to tooling/.', 'It must run in closeBundle, after index.html is written, or the hash won\'t match.', 'Changing the API URL needs a rebuild, because connect-src is baked in at build time.'],
+    alternatives: [['Cloudflare Pages', 'Equivalent for this use; the original plan.'], ['Vercel / Netlify', 'Similar free tiers; using Cloudflare keeps everything in one account.']],
+    qa: [['Why hash the inline script instead of moving it to a file?', 'It must run before first paint to avoid a theme flash. A blocking external script would cost a request, and the hash keeps the CSP strict.']] },
+
+  { id: 'edge-controls', lane: 'edge', name: 'Rate limits & cron', tech: 'Workers Rate Limiting bindings · Cron Triggers',
+    summary: 'Per-IP limits per minute come from bindings; hourly limits from DB counters. An hourly cron cleans presence, counters and the provider cache.',
+    files: ['apps/api/wrangler.jsonc', 'apps/api/src/middleware/rateLimit.ts', 'apps/api/src/repositories/cacheRepo.ts', 'apps/api/src/index.ts'],
+    facts: [['Bindings', 'RL_READ 300/60s · RL_WRITE 120 · RL_PRESENCE 20 · RL_SEARCH 60'], ['Namespaces', 'Development 1001–1004 · production 2001–2004'], ['Hourly', 'Create trip 10/h per IP · recover 3/h per email, 10/h per IP (rate_counters)'], ['Cron', '"0 * * * *" → stale presence > 5 min, expired counters, cache entries 30 days past expiry']],
+    decisions: ['Bindings are free and built in, but only support 10s or 60s periods, so hourly windows use a Postgres fixed-window counter.', 'Bindings are optional in Env, so tests skip them.'],
+    gotchas: ['The IP comes from CF-Connecting-IP. E2E spoofs it to avoid the creation limit; this is only safe because Cloudflare overwrites it in production.', 'Groups behind one NAT share the "10 trips per hour" limit.'],
+    alternatives: [['Durable Object limiter', 'Exact sliding windows, but costs Durable Object usage.'], ['Upstash Redis', 'Another vendor and key; unnecessary at pilot scale.'], ['WAF rate-limit rules', 'Dashboard config outside the repo.']],
+    qa: [['Why two rate-limit mechanisms?', 'The Workers binding is cheap and fast but limited to 60s windows; hourly anti-abuse limits need another store, and Postgres is already there.']] },
+
+  // ---------------- API ----------------
+  { id: 'hono-app', lane: 'api', name: 'Hono app & middleware', tech: 'Hono 4.13 · @hono/zod-openapi 1.6',
+    summary: 'The Worker entry point (fetch and scheduled). The middleware chain builds request context, sets headers, checks the config, connects the database and resolves the access code, then hands over to typed OpenAPI routes.',
+    files: ['apps/api/src/index.ts', 'apps/api/src/app.ts', 'apps/api/src/middleware/requestContext.ts', 'apps/api/src/middleware/securityHeaders.ts', 'apps/api/src/middleware/db.ts', 'apps/api/src/lib/errors.ts', 'apps/api/src/lib/validation.ts'],
+    facts: [['Order', 'requestContext → securityHeaders → cors → /health → config guard → db → tripAccess → routes'], ['Errors', 'AppError → {error:{code,message,details}}; unknown errors → 500 INTERNAL_ERROR, no stack trace'], ['Logs', 'JSON with requestId, method, route pattern, status, duration'], ['Docs', 'api.doc31(\'/openapi.json\')']],
+    decisions: ['Hono on Workers (QB1): tiny, edge-native, and portable to Node/Bun if hosting changes.', 'The OpenAPI document is generated from the route definitions, so the contract can be checked against code.', 'Check order 404 → 403 → 400 → 409: route middleware runs before the validators, so a viewer sending garbage gets 403, not 400.'],
+    gotchas: ['/trips/published… must be registered before /trips/{token}; tripAccess skips the literal token "published".', '/health is registered before the config guard so it can report config: error.', 'The middleware writes ctx via a layout-style pattern: c.executionCtx throws outside Workers, so the DB close falls back to awaiting inline.'],
+    alternatives: [['Express/Fastify on Render', 'A familiar Node server, but the free tier sleeps (30–60s cold starts), breaking the 2.5s load target.'], ['itty-router', 'Smaller, with no OpenAPI integration.'], ['Supabase (backend as a service)', 'Less code, but capability-code permissions would have to live in database row-level security policies or functions.']],
+    qa: [['Why is the 403/400 order important?', 'The contract fixes the order so clients get deterministic errors; role checks before validation also avoid leaking validation details to unauthorised callers.'], ['What does a request log contain?', 'Only the route pattern (e.g. /api/v1/trips/:token), never the raw path, so access codes never reach logs.']] },
+
+  { id: 'trip-access', lane: 'api', name: 'Capability resolution', tech: 'tripAccess · requireRole · tripDay',
+    summary: 'Turns the 43-character code in the path into a trip and a role with one indexed lookup; gates routes by role; resolves dayId within the trip.',
+    files: ['apps/api/src/middleware/tripAccess.ts', 'apps/api/src/repositories/tripRepo.ts', 'apps/api/src/lib/ids.ts'],
+    facts: [['Lookup', 'WHERE organiser_token=$t OR edit_token=$t OR view_token=$t (unique indexes)'], ['Unknown code', '404 NOT_FOUND, never 401'], ['Day guard', 'A dayId outside the trip → 404 (runs before validation)']],
+    decisions: ['Capability URLs instead of accounts (Q1): zero onboarding friction for a group pilot.', 'Three independent codes, so editors cannot derive the organiser code.', 'Codes are stored plainly for the MVP (QB6), because the share dialog and recovery emails need them.'],
+    gotchas: ['A database or backup leak exposes every trip, because codes aren\'t hashed or encrypted (QB6).', 'Codes in paths show up in browser history, screenshots and possibly Cloudflare\'s own logs (QA1).'],
+    alternatives: [['Hashed codes, rotated on recovery', 'Most secure, but the share dialog can\'t show links again and recovery would invalidate old links.'], ['Encrypt at rest (AES-GCM) plus a lookup hash', 'Protects leaked dumps at the cost of key management. The planned upgrade.'], ['Signed JWT capabilities', 'Stateless, but can\'t be revoked without a denylist.']],
+    qa: [['Can someone guess a link?', 'No: 256 bits of randomness, uniform 404s, and per-IP read limits.'], ['How would you revoke a leaked edit link?', 'Not supported in the MVP. It would need a "regenerate links" action updating edit_token, which breaks old links by design.']] },
+
+  { id: 'api-routes', lane: 'api', name: 'Routes E1–E17', tech: 'createRoute · Zod request schemas',
+    summary: 'Seventeen REST endpoints across 8 route files, each with typed request and response schemas and an OpenAPI description.',
+    files: ['apps/api/src/routes/trips.ts', 'apps/api/src/routes/days.ts', 'apps/api/src/routes/published.ts', 'apps/api/src/routes/destinations.ts', 'apps/api/src/routes/deleteRequests.ts', 'apps/api/src/routes/recover.ts', 'apps/api/src/routes/health.ts', 'apps/api/src/routes/common.ts'],
+    facts: [['E5', 'Weak ETag = first 16 bytes of the SHA-256 of the body; 304 on match'], ['E16', 'Cache-Control: no-cache; returns canonicalSlug'], ['E17', '202 with the same message; the email goes out via waitUntil'], ['E4', 'Optional organiserEmail (hashed) and copyFromSlug']],
+    decisions: ['REST with the capability in the path (QA1) mirrors the web URLs and is easy to reason about.', 'ETag for the hot polling endpoint (QA2).', '409 TRIP_COMPLETED rather than 423 (QA3): one status family for state conflicts.'],
+    gotchas: ['A 304 still runs the full view build and hash. It saves bandwidth only.', 'The full list is in the API catalogue section below.'],
+    alternatives: [['GraphQL', 'Flexible queries; overkill for 17 well-defined operations.'], ['tRPC', 'Great typing, but couples the client to TypeScript and hides REST semantics.']],
+    qa: [['Why is recover 202 and not 200?', 'The work (email) completes after the response, and the body must be identical whether or not trips exist.']] },
+
+  { id: 'services', lane: 'api', name: 'Services & repositories', tech: 'Business rules BR1–BR18 · Drizzle ORM 0.45',
+    summary: 'Services hold the rules (dates, slugs, version checks, copying, publishing, recovery, ranking); repositories hold only Drizzle queries.',
+    files: ['apps/api/src/services/tripService.ts', 'apps/api/src/services/dayService.ts', 'apps/api/src/services/publishedService.ts', 'apps/api/src/services/recoveryService.ts', 'apps/api/src/services/placesService.ts', 'apps/api/src/services/contributorService.ts', 'apps/api/src/services/views.ts', 'apps/api/src/repositories/'],
+    facts: [['Days', 'Stored by position; date = from_date + position − 1 (BR5)'], ['Shrink', 'Removing days with text needs confirmRemoveDays (BR6)'], ['Completed', 'Computed on read: to_date < today(AoE) (BR8)'], ['Copy', 'Copies text by position; truncates; private; no foreign key to the source (BR13)']],
+    decisions: ['Day content follows its day number when dates move (QB5), so shifting a trip by a week keeps the plan.', 'Completed is computed, not stored, so no cron job is needed for it.', 'Contributors are recorded after a successful save and never fail the save (BR18).'],
+    gotchas: ['Drizzle\'s tx.rollback() throws, so a stale trip version raises a private StaleVersion error caught outside the transaction.', 'The per-request DB connection may be closed when a waitUntil task runs, so recovery looks trips up inline and only emails in the background.', 'An Explore search LIKE-escaping bug (backslashes stripped by a shell edit) was caught by a strengthened test.'],
+    alternatives: [['Fat routes', 'Fewer files, but rules would be untestable without HTTP.'], ['Prisma', 'Popular, but its engine historically needed Accelerate or a proxy on Workers; Drizzle is light and Worker-native.']],
+    qa: [['How is the shrink confirmation enforced?', 'PATCH computes removed positions that have text; without confirmRemoveDays it returns 409 with details.removedDays, and the UI lists them before resending.']] },
+
+  { id: 'config-guard', lane: 'api', name: 'Config guard', tech: 'lib/config.ts (fail closed)',
+    summary: 'Validates environment variables per isolate. In production it rejects fake providers, log-only email, non-HTTPS origins and weak or placeholder HMAC secrets.',
+    files: ['apps/api/src/lib/config.ts', 'apps/api/src/routes/health.ts', 'apps/api/test/config.test.ts'],
+    facts: [['Health', '{status, db, config, time}; 503 when degraded'], ['Other routes', '500 INTERNAL_ERROR while misconfigured'], ['Privacy', 'Problem names go only to logs, never to responses']],
+    decisions: ['Fail closed: better an obvious outage than sample data or silently lost emails in production.'],
+    gotchas: ['Memoised per isolate: fixing a secret takes effect on the next isolate or deploy.', 'The smoke test in deploy.yml depends on it (config: ok).'],
+    alternatives: [['Validate in CI only', 'Can\'t see Worker secrets; the runtime check covers that.']],
+    qa: [['What happens if EMAIL_MODE is "log" in production?', 'configProblems reports it, /health says config: error, and every other endpoint returns 500 until fixed.']] },
+
+  { id: 'adapters', lane: 'api', name: 'Provider adapters', tech: 'geoapify.ts · geoapifyPlaces.ts · email.ts · fakes',
+    summary: 'Adapters for Geoapify autocomplete and places and for Resend email, with fake/log modes for local development and tests, 3-second timeouts and stale-cache fallback.',
+    files: ['apps/api/src/integrations/geoapify.ts', 'apps/api/src/integrations/geoapifyPlaces.ts', 'apps/api/src/integrations/email.ts', 'apps/api/src/integrations/fakeDestinations.ts', 'apps/api/src/integrations/fakePlaces.ts', 'apps/api/src/services/destinationService.ts'],
+    facts: [['Modes', 'PROVIDER_MODE fake|live · EMAIL_MODE log|live'], ['Places', '4 requests: main + beach + religion.place_of_worship + leisure.park; rankPlaces caps at 30'], ['Ranking', 'Wikipedia/Wikidata +10; museum/heritage/fort 5, beach 4, sight 3, worship 2, park 1'], ['Cache keys', 'ac:v2:<q> · places:v3:<destinationId> · 7-day TTL'], ['Duplicates', 'mergeDuplicateDestinations: same name, country and ~1 km']],
+    decisions: ['Fake modes let anyone run the stack without keys, and keep E2E deterministic.', 'Versioned cache keys roll out ranking changes immediately.', 'Per-category requests, because thousands of small temples and parks filled a combined request\'s 100 results.'],
+    gotchas: ['Beaches still rarely make the top 30, because vaguely tagged "attractions" (statues) outrank them. A known issue, deferred.', 'The key exists only in the Worker, so tuning relies on the count logs ("places fetched").'],
+    alternatives: [['OpenTripMap', 'Better descriptions and popularity ranking, but a second key and integration (QB3).'], ['Google Places', 'Best data, but billed beyond the free credit (rejected for the $0 budget).']],
+    qa: [['How would you fix the beach ranking?', 'Weight beaches 6, give unmatched categories the lowest weight, request national_park separately, and log a category breakdown to tune from real data (docs/pilot.md).']] },
+
+  // ---------------- DATA ----------------
+  { id: 'neon', lane: 'data', name: 'Neon Postgres', tech: 'Postgres 18.6 (production) · postgres.js 3.4 · Drizzle 0.45',
+    summary: 'The primary store. Each Worker request opens one short-lived TCP connection through postgres.js (max 1, prepare false) and closes it via waitUntil.',
+    files: ['apps/api/src/db/client.ts', 'apps/api/src/middleware/db.ts', 'docker-compose.yml'],
+    facts: [['Production', 'Neon free plan, Postgres 18.6 (detected by the backup job)'], ['Local / CI', 'postgres:17-alpine (docker-compose, CI services)'], ['Driver', 'postgres.js over TCP with nodejs_compat (not the Neon serverless driver)']],
+    decisions: ['Postgres for portability to a larger setup (QB2) instead of D1/SQLite.', 'postgres.js works against both Neon and local Docker; the Neon HTTP driver would need a proxy locally.'],
+    gotchas: ['No connection pooling (Hyperdrive): every request pays a TCP and TLS handshake to Neon.', 'Version skew: 17 locally and in CI, 18 in production. Fine so far; worth aligning.', 'Neon auto-suspends: the first query after idle is slower.'],
+    alternatives: [['Cloudflare D1', 'Zero-latency binding and simpler, but SQLite semantics and a migration later.'], ['Supabase Postgres', 'Free projects pause after about a week idle, risky for a 3-month pilot.'], ['Hyperdrive in front of Neon', 'Pooling and lower latency; the obvious next step.']],
+    qa: [['Why not keep a connection pool in the Worker?', 'Workers isolates can\'t hold sockets across requests reliably. Pooling belongs in Hyperdrive or Neon\'s pooler.']] },
+
+  { id: 'schema', lane: 'data', name: 'Schema & migrations', tech: 'drizzle-kit 0.31 · 9 tables · 2 migrations',
+    summary: 'Nine tables with check constraints and cascades. Migrations are generated by drizzle-kit, additive only, and applied by CI before the Worker deploy.',
+    files: ['apps/api/src/db/schema.ts', 'apps/api/drizzle.config.ts', 'apps/api/src/db/migrations/0000_init.sql', 'apps/api/src/db/migrations/0001_trip_contributors.sql', 'apps/api/src/db/seed.ts'],
+    facts: [['Tables', 'destinations, trips, days, day_presence, delete_requests, provider_cache, trip_slug_history, rate_counters, trip_contributors'], ['Checks', 'name 3–80; to_date ≥ from_date; to_date − from_date ≤ 59; position 1–60; text ≤ 5000'], ['Seed', 'Fixed 43-character codes; refuses non-local hosts without --force']],
+    decisions: ['UUID v7 IDs: time-sortable, no information leak.', 'Days stored by position, dates computed (QB5).', 'name_key unique ignoring case (Q6); slug history for redirects (QB9).', 'copied_from_trip_id has no foreign key (BR13): deleting the source never affects copies.'],
+    gotchas: ['Migrations run before the new Worker deploys, so they must stay backward compatible with the running code.', 'drizzle-kit strict: true prompts on destructive changes.'],
+    alternatives: [['Prisma Migrate', 'A richer migration workflow, but a heavier runtime.'], ['Hand-written SQL', 'Full control; loses typed queries.']],
+    qa: [['Why can migrations run before the Worker deploy?', 'They are additive (backend §10), so the old Worker keeps working on the new schema while the new one deploys.']] },
+
+  { id: 'db-ephemeral', lane: 'data', name: 'DB-backed cache, counters & presence', tech: 'provider_cache · rate_counters · day_presence',
+    summary: 'Short-lived operational data in Postgres: provider responses (7-day TTL with stale fallback), rate counters, and editing presence (30s TTL).',
+    files: ['apps/api/src/repositories/cacheRepo.ts', 'apps/api/src/repositories/presenceRepo.ts'],
+    facts: [['Cache', 'jsonb payload, fetched_at, expires_at'], ['Counters', 'Fixed windows keyed by name and window start'], ['Presence', 'PK (day_id, session_id); read filter last_seen_at > now − 30s']],
+    decisions: ['Reuse Postgres instead of adding KV or Redis: one less vendor on a $0 budget.'],
+    gotchas: ['Presence heartbeats are database writes: 20/min per IP is capped by RL_PRESENCE.', 'Cleanup depends on the hourly cron.'],
+    alternatives: [['Workers KV', 'Free and edge-cached, but eventually consistent and limited to 1k writes a day on the free plan.']],
+    qa: [['Why not store presence in memory?', 'Each Worker isolate is separate and short-lived; presence must be shared across isolates.']] },
+
+  { id: 'secrets', lane: 'data', name: 'Secrets & config', tech: 'Wrangler secrets · GitHub environment "production"',
+    summary: 'Runtime secrets live on the Worker; deploy and backup secrets live in the GitHub production environment; non-secret variables are in wrangler.jsonc.',
+    files: ['apps/api/wrangler.jsonc', 'apps/api/.dev.vars.example', '.github/workflows/deploy.yml', '.github/workflows/backup.yml'],
+    facts: [['Worker', 'DATABASE_URL · GEOAPIFY_API_KEY · RESEND_API_KEY · EMAIL_HMAC_SECRET'], ['GitHub secrets', 'CLOUDFLARE_API_TOKEN · CLOUDFLARE_ACCOUNT_ID · DATABASE_URL · BACKUP_PASSPHRASE'], ['GitHub variables', 'API_BASE_URL · APP_URL'], ['Variables', 'ENVIRONMENT, APP_PUBLIC_URL, CORS_ORIGIN, EMAIL_FROM, LOG_LEVEL, PROVIDER_MODE, EMAIL_MODE']],
+    decisions: ['Secrets are entered through prompts (wrangler secret put, gh secret set), never in the repo or chat.', 'One HMAC secret keys both email and contributor hashes.'],
+    gotchas: ['Rotating EMAIL_HMAC_SECRET breaks "Forgot my link" for existing trips and resets contributor continuity.', 'DATABASE_URL lives in two places (Worker and GitHub); rotate both.', 'EMAIL_FROM is onboarding@resend.dev, which only delivers to the Resend account owner.'],
+    alternatives: [['Cloudflare Secrets Store', 'Centralised, but newer; not needed for 4 secrets.'], ['Doppler / 1Password', 'Better rotation workflows; another vendor.']],
+    qa: [['What breaks if EMAIL_HMAC_SECRET is lost?', 'Existing organiser_email_hash values can\'t be matched, so recovery silently finds no trips. Back it up in a password manager.']] },
+
+  { id: 'backups', lane: 'data', name: 'Encrypted backups', tech: 'pg_dump (version matched) · GPG AES-256 · Actions artifact',
+    summary: 'A weekly backup.yml asks the server for its major version, installs the matching pg_dump, encrypts the dump with BACKUP_PASSPHRASE, and keeps it for 35 days.',
+    files: ['.github/workflows/backup.yml', 'docs/deployment.md'],
+    facts: [['Schedule', 'Mondays 03:17 UTC, and on demand'], ['Last run', '27 KB .dump.gpg (run 39044868477)'], ['Restore', 'gpg --decrypt → pg_restore into a Neon branch']],
+    decisions: ['Encrypted, because dumps contain access codes and the repo is public.', 'Detect the server version, because Neon upgraded to 18 and a hard-coded 17 client failed (PR #4).'],
+    gotchas: ['A restore has never been rehearsed.', 'A 35-day retention plus Neon PITR is the whole recovery story.'],
+    alternatives: [['Neon PITR only', 'A short window on the free plan.'], ['Upload to R2/S3', 'Longer retention; needs another credential.']],
+    qa: [['Why encrypt if the artifact is private?', 'In a public repository, workflow artifacts can be downloaded by others; the dump holds every trip\'s codes.']] },
+
+  // ---------------- CI/CD ----------------
+  { id: 'github', lane: 'cicd', name: 'GitHub repository', tech: 'natarajasuthan-k/tripplanner (PUBLIC)',
+    summary: 'A monorepo with pnpm workspaces (apps/*, packages/*, e2e). Changes land through PRs from phase and fix branches.',
+    files: ['pnpm-workspace.yaml', 'package.json', '.gitattributes', '.gitignore', 'eslint.config.js', '.prettierrc.json'],
+    facts: [['Visibility', 'Public'], ['main', 'Not protected (no required checks)'], ['PRs', '#1 MVP · #2 ranking/dedup · #3 per-category places · #4 backup']],
+    decisions: ['A monorepo so contract, frontend and backend change together (QB7).', '.gitattributes enforces LF line endings across Windows and Linux.'],
+    gotchas: ['Without branch protection a direct push to main deploys to production.', 'The session-export tooling (.claude/commands, scripts/) is in the public repo.'],
+    alternatives: [['Private repo', 'Hides workflow logs and artifacts; Actions minutes become limited.']],
+    qa: [['What would you add before more contributors join?', 'Branch protection with required checks (check, e2e), CODEOWNERS for specs, and Dependabot.']] },
+
+  { id: 'ci', lane: 'cicd', name: 'CI workflow', tech: '.github/workflows/ci.yml',
+    summary: 'On pull requests and pushes to main: "check" (format, lint, typecheck, test against Postgres, build), then "e2e" (Playwright in Chromium).',
+    files: ['.github/workflows/ci.yml', 'e2e/playwright.config.ts', 'e2e/globalSetup.ts'],
+    facts: [['check', 'pnpm format:check · lint · typecheck · test · build (Postgres 17 service)'], ['e2e', 'playwright install --with-deps chromium; pnpm test:e2e; report artifact on failure'], ['Timing', 'About 4–5 minutes in total']],
+    decisions: ['E2E needs check to pass first, saving minutes on obvious failures.', 'Real Postgres in CI rather than mocks, so concurrency and constraints are actually tested.'],
+    gotchas: ['Annotations: Node 20 actions deprecated, ubuntu-latest moving to 26.', 'Two flaky E2E selectors were fixed (exact text matches).'],
+    alternatives: [['Testcontainers', 'Per-test isolation; slower.']],
+    qa: [['How does E2E get a database?', 'globalSetup creates tripplanner_e2e if it is missing, runs db:migrate and db:seed, then wrangler dev uses it via --var DATABASE_URL.']] },
+
+  { id: 'deploy', lane: 'cicd', name: 'Deploy workflow', tech: '.github/workflows/deploy.yml',
+    summary: 'Triggered by a successful CI run on main: migrate Neon → deploy the API Worker → build the web app against API_BASE_URL → deploy the web Worker → smoke test.',
+    files: ['.github/workflows/deploy.yml'],
+    facts: [['Trigger', 'workflow_run (CI completed on main) or workflow_dispatch'], ['Concurrency', 'deploy-production, no cancel'], ['Smoke test', 'curl /health (5 tries), then GET the app and grep for content-security-policy'], ['Duration', 'About 40 seconds']],
+    decisions: ['Migrations run before the code, which is safe because migrations only add things.', 'Deploys only after CI is green, so main is always deployable.'],
+    gotchas: ['There is no staging environment: every merge goes straight to production.', 'Rollback is manual: wrangler rollback, or the dashboard.'],
+    alternatives: [['Cloudflare Workers Builds (Git integration)', 'Simpler, but can\'t gate on E2E or run migrations first.'], ['Preview Workers per PR', 'Spec\'d as proposed, with a Neon branch per PR; not built yet.']],
+    qa: [['What if the migration succeeds but the Worker deploy fails?', 'The old Worker keeps running on the additive schema; fix forward or re-run the deploy.']] },
+
+  { id: 'e2e', lane: 'cicd', name: 'Test suites', tech: 'Vitest 5.0 · Testing Library · Playwright 1.64 · axe-core',
+    summary: 'Unit and integration tests per package, plus Playwright end-to-end tests on desktop and Pixel 7 with axe accessibility checks in both themes.',
+    files: ['apps/api/test/', 'apps/web/src/**/*.test.tsx', 'packages/shared/test/', 'e2e/tests/'],
+    facts: [['Counts', 'shared 21 · API 96 · web 64 · E2E 47 (+1 skipped by design)'], ['E2E specs', 'create-and-share, collaboration, publish-and-copy, manage, a11y'], ['Fakes', 'PROVIDER_MODE fake, EMAIL_MODE log, fixed seed codes']],
+    decisions: ['Test against real Postgres rather than mocks: the version check, cascades and constraints are the product.', 'Name tests after AC and BR IDs for traceability.'],
+    gotchas: ['Run serially (workers: 1) because suites share one database.', 'Radix toasts render their text twice (once for screen readers); assertions use exact text.'],
+    alternatives: [['Cypress', 'Similar; Playwright does multi-context (two users) more simply.'], ['MSW', 'The spec proposed it; a 30-line fake fetch was simpler and deterministic.']],
+    qa: [['How do you test two people editing the same day?', 'collaboration.spec.ts opens two browser contexts, checks the editing indicator, forces a stale save through the API, and resolves the conflict with Keep mine.']] },
+
+  { id: 'local-dev', lane: 'cicd', name: 'Local development', tech: 'docker compose · wrangler dev · Vite',
+    summary: 'Postgres 17 in Docker, the API on :8787 with fake providers and log-only email, the web app on :5173 with a /api proxy, and optional seed data.',
+    files: ['docker-compose.yml', 'apps/api/.dev.vars.example', 'apps/web/vite.config.ts', 'README.md'],
+    facts: [['DB', 'postgres:17-alpine, trip/trip, port 5432, volume db-data'], ['Test DB', 'tripplanner_test (create once); E2E creates tripplanner_e2e'], ['pnpm', 'Through corepack (corepack enable)']],
+    decisions: ['No API keys needed locally, thanks to the fake and log modes.'],
+    gotchas: ['Windows: pnpm isn\'t on PATH until corepack is enabled; shell heredocs mangled backslashes during development.'],
+    alternatives: [['Neon branch per developer', 'Matches production Postgres 18; needs a network connection.']],
+    qa: [['How do I get a realistic local dataset?', 'pnpm db:seed resets the local database to five trips (published, completed, with a delete request, copied, full) with fixed codes.']] },
+
+  // ---------------- EXTERNAL ----------------
+  { id: 'geoapify', lane: 'external', name: 'Geoapify', tech: 'Autocomplete v1 · Places v2',
+    summary: 'City suggestions (type=city) and places of interest (filter=place:<id>). Called only from the API Worker.',
+    files: ['apps/api/src/integrations/geoapify.ts', 'apps/api/src/integrations/geoapifyPlaces.ts'],
+    facts: [['Free plan', 'About 3,000 credits a day'], ['Usage', '1 search call per new query a week; 4 places calls per destination a week'], ['Credit', 'Powered by Geoapify · © OpenStreetMap contributors (shown in the UI)']],
+    decisions: ['One provider and one key for both jobs (QB3).'],
+    gotchas: ['OSM data quality varies: duplicate cities, many small parks and temples, beaches with weak tags.'],
+    alternatives: [['OpenTripMap', 'Popularity and Wikipedia extracts.'], ['Google Places', 'Best quality; costs money.']],
+    qa: [['What if Geoapify is down?', 'Search returns 503 PROVIDER_UNAVAILABLE unless something is cached; places fall back to stale cache, and the panel shows "Suggestions unavailable" without breaking the page.']] },
+
+  { id: 'resend', lane: 'external', name: 'Resend', tech: 'POST https://api.resend.com/emails',
+    summary: 'Sends the organiser-link email at creation and the recovery email. Not used for notifications (Q13).',
+    files: ['apps/api/src/integrations/email.ts', 'apps/api/src/services/recoveryService.ts'],
+    facts: [['Free plan', 'About 100 a day, 3,000 a month'], ['Sender', 'onboarding@resend.dev (owner-only until a domain is verified)'], ['Failure', 'emailSent:false; the share dialog asks the organiser to copy the link']],
+    decisions: ['Email only for recovery, keeping volume and personal data minimal.'],
+    gotchas: ['Pilot users won\'t receive emails until the domain is verified and EMAIL_FROM is switched.'],
+    alternatives: [['Brevo', '300 a day free; can send from a single verified address, but adds branding.']],
+    qa: [['Why is sending the email awaited at creation but backgrounded for recovery?', 'Creation must report emailSent; recovery must have uniform timing, so the send happens after the 202 response.']] },
+];
+
+const FEATURES = [
+  ['F1', 'Trip creation (unique name, destination, dates ≤ 60 days)', '1', 'TripForm, E4, tripService'],
+  ['F2', 'Three capability links (organiser / edit / view-only)', '1', 'tripAccess, ShareLinksDialog'],
+  ['F3', 'Day plans: autosave, editing indicator, conflicts', '1', 'useDayAutosave, E10–E12'],
+  ['F4', 'Publish / un-publish and Explore directory', '2', 'E8, E9, E15, E16, ExplorePage'],
+  ['F5', 'Places of interest + Add to plan', '2', 'E3, placesService, PlaceList'],
+  ['F6', 'Earlier trips to the same destination', '2', 'E15 ?destinationId, EarlierTripsList'],
+  ['F7', 'Delete and delete requests', '1', 'E7, E13, E14, DeleteRequestsBanner'],
+  ['F8', 'Edit trip details (shrink confirmation)', '2', 'E6, EditTripDialog'],
+  ['F9', 'Completed trips are read-only', '2', 'BR8 (computed), TRIP_COMPLETED'],
+  ['F10', 'Optional organiser email + recovery', '2', 'E4 email, E17, Resend, HMAC'],
+  ['F11', 'Trips on this device', '1', 'lib/myTrips.ts, MyTripsList'],
+  ['F12', 'Copy a published plan', '2', 'E4 copyFromSlug, CreateTripPage copy mode'],
+  ['F13', 'Onboarding: How it works + role tips', '1', 'HowItWorksPage, RoleTip'],
+];
+
+const FLOWS = [
+  { id: 'create', label: 'Create trip', desc: 'An organiser creates a trip, optionally with a recovery email, and gets three links.',
+    steps: [['create-flow', 'TripForm validates with the shared Zod rules; the destination combobox calls E2 (300 ms after typing stops).'], ['api-client', 'GET /destinations/search, then POST /trips with name, destinationId, dates and organiserEmail?'], ['edge-controls', 'RL_WRITE per-IP limit; the hourly create counter (10/h per IP).'], ['hono-app', 'Middleware: request ID, security headers, CORS, config guard, then the per-request DB connection.'], ['adapters', 'Destination search: Geoapify autocomplete (cache ac:v2), merged duplicates, upserted destinations.'], ['geoapify', 'Autocomplete type=city (live mode only).'], ['services', 'tripService.createTrip: name_key uniqueness, slug, 3× randomToken(), days 1…N, organiser_email_hash.'], ['neon', 'A transaction inserts trips and days.'], ['resend', 'If an email was given: the organiser-link email; emailSent is returned.'], ['device-storage', 'rememberTrip() adds the organiser code to tp.myTrips.'], ['trip-workspace', 'Navigate to /o/:token?created=1; the share dialog shows edit, view and organiser links.']] },
+  { id: 'edit', label: 'Edit a day', desc: 'A traveller types into a day while another person is also editing it.',
+    steps: [['trip-workspace', 'DayCard: focus starts the presence heartbeat; typing writes the draft and debounces a save for 1s.'], ['device-storage', 'tp.draft.<dayId> holds the text until the save is acknowledged.'], ['api-client', 'PUT /trips/{token}/days/{dayId} {text, version, editorName} + X-Session-Id.'], ['edge-controls', 'RL_WRITE (120/min per IP); presence heartbeats on RL_PRESENCE.'], ['trip-access', 'The code resolves to role editor; requireRole; tripDay checks the day belongs to the trip.'], ['services', 'dayService.saveDay: UPDATE … WHERE version=$v; 0 rows → 409 DAY_VERSION_CONFLICT with the current day.'], ['neon', 'days row updated; trip_contributors gets an HMAC row (BR18).'], ['trip-workspace', 'On 409: ConflictPanel with Keep mine / Use theirs; otherwise "Saved".'], ['api-client', 'Other browsers poll GET /trips/{token} every 10s with If-None-Match, seeing the new text and "is editing…".']] },
+  { id: 'publish', label: 'Publish & explore', desc: 'An organiser publishes; a visitor finds the trip, reads it and copies the plan.',
+    steps: [['trip-workspace', 'Organiser clicks Publish (confirm) → POST /trips/{token}/publish (E8).'], ['trip-access', 'Only the organiser role may publish; allowed even on Completed trips.'], ['neon', 'trips.is_published = true, published_at = now().'], ['public-pages', 'Visitor opens /explore: GET /trips/published?q=&page= (E15, ILIKE with escaped wildcards).'], ['services', 'publishedService builds summaries and the PublicTripView (no links, no editors).'], ['public-pages', 'GET /trips/published/{slug} (E16, no-cache), canonicalSlug redirect, then "Copy this plan".'], ['create-flow', 'Copy mode pre-fills the destination and day count, then POST /trips with copyFromSlug (copied by position).']] },
+  { id: 'recover', label: 'Forgot my link', desc: 'An organiser on a new device asks for their organiser links by email.',
+    steps: [['public-pages', 'RecoverPage validates the email and POSTs /recover (E17).'], ['hono-app', 'The route computes HMAC(EMAIL_HMAC_SECRET, normalised email).'], ['db-ephemeral', 'rate_counters: 3/h per email hash, 10/h per IP → otherwise 429 with Retry-After.'], ['neon', 'trips WHERE organiser_email_hash = $hash (looked up inline, same cost for a hit or a miss).'], ['secrets', 'EMAIL_HMAC_SECRET must never change, or no hashes will match.'], ['resend', 'waitUntil sends one email listing every organiser link; the response is already 202.'], ['public-pages', 'The UI always shows "If we have trips for this email, we\'ve sent the links."']] },
+  { id: 'ideas', label: 'Ideas & add to plan', desc: 'A traveller opens the Ideas panel and adds a suggested place to a day.',
+    steps: [['trip-workspace', 'SidePanel (Places / Earlier trips); Plan/Ideas tabs on mobile.'], ['api-client', 'GET /destinations/{id}/places (E3), staleTime 24h in TanStack Query.'], ['db-ephemeral', 'provider_cache places:v3:<id> (7 days); stale fallback if Geoapify fails.'], ['adapters', '4 Geoapify requests (main, beach, worship, park) → rankPlaces → top 30.'], ['geoapify', 'Places v2 with filter=place:<providerPlaceId>.'], ['trip-workspace', '"Add to plan" → dayActions.appendToDay → the DayCard autosaves "• Name (Category)" through the version check.']] },
+  { id: 'delete', label: 'Delete request', desc: 'A traveller asks for deletion; the organiser approves it.',
+    steps: [['trip-workspace', 'Editor: "Request deletion" → POST /trips/{token}/delete-requests (E13).'], ['trip-access', 'Only the editor role may request; organisers and viewers get 403.'], ['neon', 'delete_requests row (status pending); all requests kept (QB8).'], ['api-client', 'The organiser\'s next poll of E5 includes pendingDeleteRequests (organiser only).'], ['trip-workspace', 'Banner: "Ravi asked…" → Approve (DELETE /trips/{token}, E7) or Dismiss all (E14).'], ['neon', 'ON DELETE CASCADE removes days, presence, requests, slug history and contributors; every code now returns 404.']] },
+  { id: 'deploy', label: 'Deploy pipeline', desc: 'A PR is merged into main and reaches production.',
+    steps: [['github', 'PR merged into main (no branch protection today).'], ['ci', 'check: format, lint, typecheck, tests (Postgres 17), build; then e2e in Playwright.'], ['e2e', 'The E2E suite boots wrangler dev and Vite against tripplanner_e2e with seed codes.'], ['deploy', 'workflow_run on CI success → the deploy job in the production environment.'], ['schema', 'pnpm db:migrate applies additive Drizzle migrations to Neon first.'], ['hono-app', 'wrangler deploy --env production (tripplanner-api, rate limits, cron).'], ['web-worker', 'Vite build with VITE_API_BASE_URL generates _headers, then wrangler deploy (tripplanner).'], ['config-guard', 'Smoke test: /health must report status, db and config all ok; the app must serve a CSP header.']] },
+  { id: 'backup', label: 'Weekly backup', desc: 'The encrypted database backup every Monday.',
+    steps: [['backups', 'Cron 17 3 * * 1 (or a manual run) starts backup.yml in the production environment.'], ['secrets', 'DATABASE_URL and BACKUP_PASSPHRASE from the GitHub production environment.'], ['neon', 'psql: show server_version_num → major version 18 → install postgresql-client-18.'], ['backups', 'pg_dump --format=custom | gpg --symmetric AES256 → *.dump.gpg uploaded as an artifact (35 days).']] },
+];
+
+const API_ROWS = [
+  ['E1', 'GET /health', 'Public', 'health.ts', 'status / db / config; 503 when degraded'],
+  ['E2', 'GET /destinations/search?q=&limit=', 'Public', 'destinations.ts', 'Geoapify autocomplete; ac:v2 cache; duplicates merged; upserts destinations'],
+  ['E3', 'GET /destinations/{destinationId}/places', 'Public', 'destinations.ts', '4 provider calls; ranked; places:v3 cache; non-UUID → 404'],
+  ['E4', 'POST /trips', 'Public', 'trips.ts', 'Create or copy; optional email (HMAC); 10/h per IP; 201 + emailSent'],
+  ['E5', 'GET /trips/{token}', 'Any code', 'trips.ts', 'Role-specific view; weak ETag → 304; polled every 10s'],
+  ['E6', 'PATCH /trips/{token}', 'Organiser', 'trips.ts', 'Version check; DAYS_WOULD_BE_REMOVED; slug history'],
+  ['E7', 'DELETE /trips/{token}', 'Organiser', 'trips.ts', 'Cascade delete; also approves delete requests'],
+  ['E8/E9', 'POST /trips/{token}/publish | /unpublish', 'Organiser', 'trips.ts', 'Idempotent; allowed when Completed'],
+  ['E10', 'PUT /trips/{token}/days/{dayId}', 'Organiser, Editor', 'days.ts', 'Version check (BR7); records contributor (BR18)'],
+  ['E11', 'PUT /trips/{token}/days/{dayId}/presence', 'Organiser, Editor', 'days.ts', 'Heartbeat; 30s TTL; RL_PRESENCE'],
+  ['E12', 'DELETE /trips/{token}/days/{dayId}/presence/{sessionId}', 'Organiser, Editor', 'days.ts', 'Idempotent 204'],
+  ['E13', 'POST /trips/{token}/delete-requests', 'Editor', 'deleteRequests.ts', 'Keeps every request'],
+  ['E14', 'POST /trips/{token}/delete-requests/dismiss', 'Organiser', 'deleteRequests.ts', 'Returns dismissedCount'],
+  ['E15', 'GET /trips/published?q=&destinationId=&excludeSlug=&page=&limit=', 'Public', 'published.ts', 'Newest first; max-age=60'],
+  ['E16', 'GET /trips/published/{slug}', 'Public', 'published.ts', 'no-cache; resolves old slugs → canonicalSlug'],
+  ['E17', 'POST /recover', 'Public', 'recover.ts', 'Always 202 with the same body; 3/h per email, 10/h per IP; email via waitUntil'],
+];
+
+const TABLES = [
+  ['destinations', 'id, provider, provider_place_id, name, region, country, country_code, lat, lon', 'unique (provider, provider_place_id); rows only come from provider results (BR17)'],
+  ['trips', 'id, name, name_key, slug, destination_id, from_date, to_date, organiser_token, edit_token, view_token, organiser_email_hash, is_published, published_at, copied_from_trip_id, version', 'name 3–80; to_date ≥ from_date; ≤ 59-day span; unique name_key/slug/codes; version for edits'],
+  ['days', 'id, trip_id, position, text, version, updated_by_name, updated_at', 'unique (trip_id, position); position 1–60; text ≤ 5000; cascade'],
+  ['day_presence', 'day_id, session_id, display_name, last_seen_at', 'PK (day_id, session_id); 30s TTL on read; cron removes rows older than 5 min'],
+  ['delete_requests', 'id, trip_id, requested_by_name, status (pending|dismissed), created_at, resolved_at', 'index (trip_id, status); cascade'],
+  ['provider_cache', 'cache_key, payload (jsonb), fetched_at, expires_at', 'keys ac:v2:<q>, places:v3:<id>; stale fallback'],
+  ['trip_slug_history', 'old_slug, trip_id, created_at', 'old slugs redirect; a live slug evicts its history entry (QB9)'],
+  ['rate_counters', 'bucket_key, count, expires_at', 'fixed windows for hourly limits'],
+  ['trip_contributors', 'trip_id, contributor_hash, first_seen_at', 'PK (trip_id, contributor_hash); HMAC of trip + name (Q25/BR18)'],
+];
+
+const DECISIONS = [
+  ['Q1', 'Identity without accounts', 'Capability links (organiser / edit / view)', 'Zero sign-up friction for group trips; roles still enforced'],
+  ['Q2', 'Visibility of new trips', 'Private until published', 'Safe default; publishing is explicit'],
+  ['Q5/QB5', 'Shortening and moving dates', 'Warn + confirm; content follows its day number', 'Never silently lose plans; moving a trip keeps the plan'],
+  ['Q6', 'Trip name uniqueness', 'Unique across the whole app (case-insensitive)', 'Clean slugs and directory; trade-off: name squatting'],
+  ['Q7', 'Read-only sharing', 'Separate view-only link', 'Family and friends can follow without risk'],
+  ['Q9', 'After the trip ends', 'Completed → read-only (computed)', 'Preserves the record; no cron needed'],
+  ['Q11/Q-F4', 'Architecture', 'Separate SPA + API', 'Free static hosting; enforced contract'],
+  ['Q12/F10', 'Lost organiser link', 'Device list + optional email recovery', 'Recovery without accounts; email stored only as an HMAC'],
+  ['Q15/Q16', 'Saving and concurrency', 'Autosave + soft editing indicator + version check', 'Smooth UX, no blocking locks'],
+  ['Q24', 'Editing a trip under way', 'Unchanged past From date allowed', 'Can extend a trip in progress'],
+  ['Q25', 'Measuring collaboration', 'Anonymous HMAC contributor count', 'Pilot metric without storing names'],
+  ['QB1', 'API hosting', 'Cloudflare Workers + Hono', 'No cold starts, free plan, portable framework'],
+  ['QB2', 'Database', 'Neon Postgres', 'Standard SQL, room to grow; D1 would need a migration later'],
+  ['QB3', 'Places & destinations', 'Geoapify for both', 'One key and free plan; trade-off: OSM data quality'],
+  ['QB4', 'Email', 'Resend', 'Simple API; needs a verified domain'],
+  ['QB6', 'Code storage', 'Plain text for the MVP', 'Share dialog and recovery need them; encryption planned'],
+  ['QB7', 'Repository', 'pnpm monorepo + shared package', 'One set of rules for both sides'],
+  ['QB8', 'Many delete requests', 'Keep all; approve or dismiss all', 'The organiser sees full context'],
+  ['QB9', 'Rename a published trip', 'New slug; old slugs redirect', 'Shared links keep working'],
+  ['QB11', 'Provider data quality', 'Rank places; merge duplicate cities', 'Found on live data after the first deploy'],
+  ['QA1', 'Where the code travels', 'URL path', 'Mirrors web URLs; logs record route patterns only'],
+  ['QA2', 'Polling cost', 'Weak ETag / 304 on E5', 'Saves bandwidth on mobile'],
+  ['QA3', 'Edits on a Completed trip', '409 TRIP_COMPLETED', 'One status family for state conflicts'],
+  ['Q-F10', 'Web hosting', 'Worker with static assets', 'The account\'s site was created as a Worker; same headers and fallback as Pages'],
+];
+
+const STACK = [
+  ['TypeScript', '^6.0.3 (pinned < 6.1)', 'all packages', 'Strict types end to end; pinned because typescript-eslint 8.71 doesn\'t support TS 7'],
+  ['pnpm', '10.34.7 (packageManager)', 'root', 'Workspaces, strict node_modules, fast CI cache'],
+  ['Node.js', '≥ 22 (.nvmrc 24)', 'tooling, CI', 'Runs Vite, Vitest, drizzle-kit and Playwright'],
+  ['React / React DOM', '^19.3.1', 'apps/web', 'Mature ecosystem; works with the React Compiler lint rules'],
+  ['React Router', '^8.4.0', 'apps/web', 'Data router with useBlocker for unsaved-changes guards'],
+  ['TanStack Query', '^5.104.3', 'apps/web', 'Polling, caching, infinite queries, mutation states'],
+  ['React Hook Form + resolvers', '^7.90.0 / ^5.9.1', 'apps/web', 'Performant forms reusing the shared Zod schemas'],
+  ['Radix UI', '^1.8.1', 'apps/web', 'Accessible dialogs, popovers, tabs, toasts'],
+  ['Tailwind CSS', '^4.3.3', 'apps/web', 'Fast styling, class-based dark mode'],
+  ['date-fns', '^4.4.0', 'apps/web', 'Small, tree-shakeable date formatting'],
+  ['lucide-react', '^1.58.0', 'apps/web', 'Tree-shakeable icons'],
+  ['Vite', '^8.3.4', 'apps/web', 'Fast development server; Rolldown production builds; CSP plugin hook'],
+  ['Hono', '^4.13.13', 'apps/api', 'Tiny, edge-native, portable router'],
+  ['@hono/zod-openapi', '^1.6.3', 'apps/api', 'Typed routes plus a generated OpenAPI document'],
+  ['Zod', '^4.6.7', 'shared, api, web', 'One validation language across the stack'],
+  ['Drizzle ORM / drizzle-kit', '^0.45.4 / ^0.31.11', 'apps/api', 'Type-safe SQL, light, Worker-friendly; generated migrations'],
+  ['postgres (postgres.js)', '^3.4.9', 'apps/api, e2e', 'TCP driver that works with both Neon and Docker'],
+  ['Wrangler', '^4.151.1', 'apps/api, apps/web', 'Local Workers runtime, secrets, deploys, tail'],
+  ['@cloudflare/workers-types', '^5.20261016.1', 'apps/api', 'Types for bindings (RateLimit, ExecutionContext)'],
+  ['tsx', '^4.23.15', 'apps/api', 'Runs the TypeScript seed script'],
+  ['Vitest', '^5.0.5', 'root', 'Fast unit and integration tests, Vite-native'],
+  ['Testing Library / jsdom', '^16.3.3 / ^30.1.3', 'apps/web', 'User-centric component tests'],
+  ['Playwright / axe-core', '^1.64.1 / ^4.14.0', 'e2e', 'Multi-context browser tests; WCAG checks'],
+  ['ESLint / typescript-eslint / Prettier', '^10.13.0 / ^8.71.2 / ^3.9.10', 'root', 'Lint (including React Compiler rules) and formatting in CI'],
+  ['PostgreSQL', '17-alpine (local/CI) · 18.6 (Neon)', 'docker-compose.yml, Neon', 'Relational integrity for version checks and cascades'],
+  ['Cloudflare Workers', 'compatibility_date 2026-10-01, nodejs_compat', 'API and web', 'No cold starts; free plan; static assets'],
+  ['GitHub Actions', 'checkout@v4, setup-node@v4, pnpm/action-setup@v4, upload-artifact@v4', '.github/workflows', 'CI, gated deploy, encrypted backups'],
+];
+
+const RISKS = [
+  ['High', 'Access codes stored in plain text', 'trips.organiser_token/edit_token/view_token (QB6); the backups contain them too', 'Encrypt at rest (AES-GCM) with a lookup hash; add a "regenerate links" action'],
+  ['High', 'main is unprotected in a public repo', 'gh: "Branch not protected"; any direct push to main runs Deploy to production', 'Branch protection with required check and e2e; restrict who can push'],
+  ['High', 'Recovery email reaches only the account owner', 'EMAIL_FROM = onboarding@resend.dev in wrangler.jsonc env.production', 'Verify a domain in Resend, switch EMAIL_FROM, redeploy'],
+  ['Med', 'No staging environment', 'deploy.yml goes straight to production after CI', 'Preview Workers + Neon branch per PR (spec\'d as proposed)'],
+  ['Med', 'No database connection pooling', 'db/client.ts opens a TCP and TLS connection per request', 'Cloudflare Hyperdrive or the Neon pooler'],
+  ['Med', 'Free-plan quotas are a single point of failure', '10s polling; Workers ≈100k/day; Geoapify ≈3k credits/day; Resend 100/day', 'Watch usage weekly (docs/pilot.md); move to paid tiers before a wider launch'],
+  ['Med', 'No error monitoring or alerting', 'Only Workers Logs and wrangler tail; no uptime monitor configured yet', 'UptimeRobot on /health; Sentry or Logpush'],
+  ['Med', 'Codes travel in URLs', 'History, screenshots and chat previews; Cloudflare\'s own logs may contain paths (QA1)', 'Referrer no-referrer already; document the safe sharing guidance'],
+  ['Med', 'EMAIL_HMAC_SECRET is irreplaceable', 'It keys email and contributor hashes', 'Back it up; plan a versioned key scheme for rotation'],
+  ['Med', 'Backup restore not rehearsed', 'Backup workflow verified; restore never run', 'Restore into a Neon branch once and record the time it takes'],
+  ['Med', 'Places quality: beaches and notable parks missing', 'Live check: Chennai/Mumbai show 0 beaches (known issue)', 'Re-weight beaches, lower the fallback weight, add national_park, log category breakdowns'],
+  ['Low', 'Postgres version skew', 'Local/CI 17 vs Neon 18.6', 'Move docker-compose and CI to postgres:18'],
+  ['Low', 'Shared-device exposure', 'tp.myTrips keeps organiser codes in localStorage', 'Add a "forget all on this device" action; warn on shared computers'],
+  ['Low', 'Trip-name probing', 'TRIP_NAME_TAKEN reveals that a private trip with that name exists', 'Scope uniqueness to published trips, or add a suffix automatically'],
+  ['Low', 'Shared-NAT rate limits', 'Create limit 10/h per IP; groups on one Wi-Fi share it', 'Raise the limit or key it by IP plus code'],
+  ['Low', 'Display names are unverified', 'Anyone with the edit link can type any name', 'Acceptable for trusted groups (goal §9)'],
+  ['Low', 'CI tooling deprecations', 'Node 20 actions forced to 24; ubuntu-latest moving to 26', 'Bump actions to @v5 and pin the runner'],
+  ['Low', 'Dev tooling in the public repo', '.claude/commands/export-session.md, scripts/export_transcript_to_text.py', 'Move to a private location or document their purpose'],
+];
+
+const RUNBOOK = [
+  ['Setup', 'corepack enable', 'Put pnpm 10.34.7 on PATH (may need an admin shell on Windows)'],
+  ['Setup', 'pnpm install', 'Install every workspace (apps/*, packages/*, e2e)'],
+  ['Setup', 'cp apps/api/.dev.vars.example apps/api/.dev.vars', 'Local secrets; fake providers need no real keys'],
+  ['Database', 'pnpm db:up  →  docker compose up -d db', 'Postgres 17 on localhost:5432 (trip/trip, db tripplanner)'],
+  ['Database', 'pnpm db:down  →  docker compose down', 'Stop the container (data kept in volume db-data)'],
+  ['Database', 'docker compose exec db createdb -U trip tripplanner_test', 'One-time: database for API integration tests'],
+  ['Database', 'pnpm db:generate  →  drizzle-kit generate', 'Create a migration from apps/api/src/db/schema.ts'],
+  ['Database', 'pnpm db:migrate  →  drizzle-kit migrate', 'Apply migrations to DATABASE_URL (local by default)'],
+  ['Database', 'pnpm db:seed  →  tsx src/db/seed.ts', 'Reset a local database to 5 sample trips with fixed codes'],
+  ['Database', 'pnpm --filter @tripplanner/api db:studio', 'Drizzle Studio for browsing data'],
+  ['Dev', 'pnpm dev', 'API (wrangler dev, :8787) and web (vite, :5173) in parallel'],
+  ['Dev', 'pnpm dev:api  |  pnpm dev:web', 'Run one side only'],
+  ['Quality', 'pnpm format  |  pnpm format:check', 'Prettier write / check (CI runs check)'],
+  ['Quality', 'pnpm lint', 'ESLint across the monorepo'],
+  ['Quality', 'pnpm typecheck', 'tsc in every package'],
+  ['Tests', 'pnpm test', 'Vitest in shared, api (needs Postgres) and web'],
+  ['Tests', 'pnpm test:e2e', 'Playwright desktop + mobile; boots wrangler dev and Vite; needs pnpm db:up'],
+  ['Build', 'pnpm build', 'Web production bundle + API Worker dry run'],
+  ['Deploy', 'git push origin main (via a merged PR)', 'CI → Deploy workflow: migrate → API → web → smoke test'],
+  ['Deploy', 'gh workflow run Deploy --ref main', 'Manual redeploy (workflow_dispatch)'],
+  ['Deploy', 'cd apps/api && pnpm exec wrangler deploy --env production', 'Manual API deploy (normally done by CI)'],
+  ['Deploy', 'cd apps/web && pnpm build && pnpm exec wrangler deploy', 'Manual web deploy; set VITE_API_BASE_URL first'],
+  ['Secrets', 'pnpm exec wrangler secret put <NAME> --env production', 'DATABASE_URL, GEOAPIFY_API_KEY, RESEND_API_KEY, EMAIL_HMAC_SECRET (in apps/api)'],
+  ['Secrets', 'gh secret set <NAME> --env production --repo natarajasuthan-k/tripplanner', 'CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, DATABASE_URL, BACKUP_PASSPHRASE'],
+  ['Ops', 'pnpm exec wrangler tail --env production', 'Live API logs (route patterns only; "places fetched" counts)'],
+  ['Ops', 'pnpm exec wrangler rollback --env production', 'Roll the API back to the previous version'],
+  ['Ops', 'curl https://tripplanner-api.natarajasuthan.workers.dev/api/v1/health', 'Expect {"status":"ok","db":"ok","config":"ok"}'],
+  ['Backup', 'gh workflow run Backup --ref main', 'On-demand encrypted pg_dump (also runs Mondays 03:17 UTC)'],
+  ['Backup', 'gpg --decrypt <file>.dump.gpg > restore.dump && pg_restore --clean --if-exists --no-owner --dbname "$BRANCH_DATABASE_URL" restore.dump', 'Restore into a Neon branch first'],
+];
+
+const BANK = {
+  'Architecture': [
+    ['L1', 'Walk me through the high-level architecture.', 'A React SPA served by a Workers static-assets Worker talks to a Hono API Worker under /api/v1, which uses Neon Postgres through Drizzle and postgres.js. Geoapify supplies destinations and places; Resend sends organiser-link emails. GitHub Actions runs CI, then deploys (migrate → API → web → smoke test), plus a weekly encrypted backup.', ['architecture']],
+    ['L2', 'Why separate the SPA and API instead of using Next.js?', 'Q11/Q-F4: free static hosting, a clean contract enforced by the API spec and OpenAPI, and the option to move either side independently. SSR wasn\'t needed, because SEO isn\'t a pilot goal.', ['architecture', 'frontend']],
+    ['L2', 'Why Cloudflare Workers rather than a Node host?', 'QB1: no cold starts (Render\'s free plan sleeps and takes 30–60s to wake), a generous free plan, built-in rate limiting and cron, and the same account as the web app. Hono keeps the code portable to Node if needed.', ['architecture', 'backend']],
+    ['L3', 'What would change for a mass-market launch?', 'Hyperdrive or pooling, paid Workers and Neon plans, encrypted codes, real-time sync (Durable Objects or WebSockets) if conflicts grow, a staging environment with preview deploys, branch protection, error monitoring, and possibly accounts layered on top of capability links.', ['architecture', 'scaling']],
+  ],
+  'Frontend': [
+    ['L1', 'How does one page serve organiser, editor and viewer?', 'TripPage reads access.role and permissions from GET /trips/{token}. Controls render from permissions; the server re-checks every action (AC9.2).', ['frontend', 'security']],
+    ['L2', 'Explain the autosave state machine.', 'useDayAutosave: idle → dirty (1s debounce) → saving → saved; failures retry at 2s, 5s and 10s, then error; a 409 sets conflict and pauses. One save in flight; edits typed meanwhile are queued. The base version and text live in refs; drafts are mirrored to localStorage.', ['frontend', 'autosave']],
+    ['L3', 'Two React bugs you fixed, and their root causes?', '(1) A deleted trip stayed visible: the component checked data before the 404 error, and TanStack keeps old data on a failed refetch. (2) The "emailed" note vanished: setSearchParams replaced the history entry and dropped location.state, so it is now captured once with useState.', ['frontend', 'debugging']],
+    ['L2', 'How is accessibility handled?', 'Radix primitives, an ARIA combobox, aria-live save status and editing indicators, focus management, 44px touch targets and WCAG AA contrast (fixed after axe found teal-600 and slate-500 failures). axe runs in Playwright on 7 pages × 2 themes.', ['frontend', 'a11y']],
+    ['L2', 'How do you keep the bundle small?', 'Lazy routes, tree-shakeable icons, and "sideEffects": false on the shared package, which cut 24 KB gzipped. The main chunk is about 119 KB against a 150 KB budget.', ['frontend', 'performance']],
+  ],
+  'Backend & API': [
+    ['L1', 'How is a request authorised?', 'tripAccess resolves the code in the path with one indexed OR lookup to a trip and role; requireRole gates per route before validation; unknown codes return 404.', ['backend', 'security']],
+    ['L2', 'How does the version check work in SQL?', 'UPDATE days SET text=$t, version=version+1 … WHERE id=$id AND trip_id=$trip AND version=$v RETURNING *. No row means a conflict: reload the day and return 409 with details.current. A test fires two saves in parallel and expects exactly one 200 and one 409.', ['backend', 'concurrency']],
+    ['L2', 'Why compute "Completed" instead of storing it?', 'to_date < today(AoE) on every read means no scheduled job, no drift, and no state to migrate (BR8).', ['backend']],
+    ['L3', 'What is subtle about background work on Workers here?', 'waitUntil tasks can outlive the per-request DB connection, which dbMiddleware closes. Recovery therefore looks trips up inline (uniform cost) and only sends the email in the background.', ['backend', 'workers']],
+    ['L2', 'How are errors standardised?', 'AppError(code, message, details) maps to the shared ERROR_STATUS table; a single onError handler returns {error:{code,message,details}}; unknown errors become 500 with no stack trace; Retry-After is set for RATE_LIMITED.', ['backend', 'api']],
+    ['L3', 'Why did ETag not reduce Worker usage?', 'The hash covers the full response body, so the server still builds the view (database query included) before comparing. A 304 saves bytes on the wire, not compute or request count.', ['backend', 'performance']],
+  ],
+  'Data': [
+    ['L1', 'Describe the core tables.', 'trips (3 codes, name_key, slug, version, publish state, email hash) 1—N days (position, text, version); plus presence, delete requests, slug history, provider cache, rate counters and contributors. Deleting a trip cascades to everything.', ['data']],
+    ['L2', 'Why store days by position?', 'QB5: when dates move, Day 1 stays Day 1; dates are computed as from_date + position − 1. Shrinking removes trailing positions after confirmation.', ['data']],
+    ['L2', 'Why postgres.js and not the Neon serverless driver?', 'postgres.js speaks TCP to both Neon and local Docker; the Neon HTTP/WS driver would need a local proxy. The cost is a TCP and TLS handshake per request without pooling.', ['data', 'workers']],
+    ['L3', 'What broke the first backup, and how did you fix it permanently?', 'Neon runs 18.6 but the job installed pg_dump 17, causing "server version mismatch". The job now queries show server_version_num and installs postgresql-client-<major> (PR #4).', ['data', 'ops']],
+  ],
+  'Security & privacy': [
+    ['L2', 'Threat model of capability links?', 'Codes can\'t be guessed (256 bits), but they can leak (shared chats, history, screenshots) and can\'t be revoked in the MVP. Database dumps expose them because they are stored plainly (QB6). Mitigations: no-referrer, logs record only route patterns, no codes in public views, uniform 404s.', ['security']],
+    ['L2', 'How is the organiser email kept private?', 'Only HMAC-SHA256(secret, normalised email) is stored. The address is used once to send, never logged, never returned. Recovery hashes the typed address and replies identically either way.', ['security', 'privacy']],
+    ['L3', 'Why does the CSP allow unsafe-inline styles but not scripts?', 'Scripts are pinned by sha256 hash at build time. Radix\'s scroll lock injects a <style> element, so style-src needs unsafe-inline; style injection is a far smaller risk than script injection.', ['security', 'frontend']],
+    ['L2', 'What does the config guard protect against?', 'Deploying production with fake providers, log-only email, HTTP origins, or a placeholder or short HMAC secret. /health reports config:error and every other route returns 500 until it is fixed.', ['security', 'ops']],
+  ],
+  'DevOps & CI/CD': [
+    ['L1', 'What happens when a PR merges?', 'CI runs on main (check, then e2e); on success, workflow_run starts Deploy: db:migrate on Neon, wrangler deploy for the API, Vite build and wrangler deploy for the web app, then a smoke test of /health and the CSP header.', ['ops']],
+    ['L2', 'How is a bad deploy rolled back?', 'wrangler rollback (or the dashboard) for either Worker. Migrations are additive, so the previous Worker still works on the new schema; fix forward otherwise.', ['ops']],
+    ['L3', 'What is missing from the release process?', 'Branch protection on a public repo, a staging or preview environment, automated rollback on smoke-test failure, and error monitoring.', ['ops', 'risk']],
+    ['L2', 'Where do secrets live?', 'Worker secrets (runtime: DATABASE_URL, Geoapify, Resend, HMAC) and the GitHub production environment (deploy and backup: Cloudflare token and account, DATABASE_URL, BACKUP_PASSPHRASE). None are in the repo; all were entered through prompts.', ['ops', 'security']],
+  ],
+  'Testing & quality': [
+    ['L2', 'Why integration tests against real Postgres?', 'The product depends on database behaviour: version checks, unique constraints, cascades, ILIKE escaping. Mocks would hide exactly the bugs that matter.', ['testing']],
+    ['L2', 'How do you test real-time collaboration end to end?', 'Two Playwright browser contexts: one focuses a day, the other must show "Asha is editing…" within a poll interval; a stale API save forces a conflict that is resolved with Keep mine; the server then has version 3.', ['testing', 'autosave']],
+    ['L3', 'Which flaky tests did you hit and why?', 'Substring text matches ("3 days" also matched an Earlier-trips card when it loaded first), Radix toasts appearing twice in the DOM, and a helper checking the tabs before the trip had loaded. Each fix tightened selectors or waited for a real condition.', ['testing']],
+  ],
+  'Product & process': [
+    ['L1', 'What problem does the app solve and for whom?', 'Groups planning a trip scatter ideas across chats; Trip Planner gives one shared, link-accessible, day-by-day plan with no sign-up (goal §1–2).', ['product']],
+    ['L2', 'How did spec-first development work here?', 'Four specs (goal, frontend, backend, API contract) with decision logs. Each open question was asked and recorded; code and tests cite IDs (F#, AC#, BR#, E#); specs were updated whenever reality differed.', ['process']],
+    ['L2', 'How do you measure pilot success?', 'docs/pilot.md queries: trips with suggested places (lines starting with •), the share of trips with 2+ contributors (trip_contributors), publish and email adoption; plus feedback, zero data loss and $0 cost.', ['product', 'metrics']],
+    ['L3', 'Name two issues found only on live data.', 'Duplicate "Kyoto" results (two Geoapify city entries with identical coordinates) and Chennai\'s places dominated by small parks. Both were fixed with deduplication and ranking; beaches remain a known issue.', ['product', 'data quality']],
+  ],
+};
+
+// ---------------------------------------------------------------------------------------------
+// RENDERING
+// ---------------------------------------------------------------------------------------------
+const byId = Object.fromEntries(C.map((c) => [c.id, c]));
+const $ = (sel) => document.querySelector(sel);
+const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+// Render `code`-style spans for backticked text and inline file paths.
+const rich = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+
+function renderEndpoints() {
+  $('#endpoints').innerHTML = ENDPOINTS.map(([k, url, note]) =>
+    `<a class="endpoint" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><b>${esc(k)}</b><span>${esc(note || url.replace(/^https:\/\//, ''))}</span></a>`).join('');
+}
+
+function renderLanes() {
+  $('#lanes').innerHTML = LANES.map((lane) => {
+    const nodes = C.filter((c) => c.lane === lane.id).map((c) =>
+      `<button type="button" class="node" data-id="${c.id}" aria-label="${esc(c.name)}"><span class="badge" aria-hidden="true"></span><span class="n-name">${esc(c.name)}</span><span class="n-tech">${esc(c.tech)}</span></button>`).join('');
+    return `<div class="lane lane-${lane.id}" role="group" aria-label="${esc(lane.label)}"><div class="lane-label"><b>${esc(lane.label)}</b><span>${esc(lane.desc)}</span></div><div class="lane-nodes">${nodes}</div></div>`;
+  }).join('');
+  document.querySelectorAll('.node').forEach((el) => el.addEventListener('click', () => select(el.dataset.id, true)));
+}
+
+function list(items, cls) {
+  return items && items.length ? `<ul class="${cls || ''}">${items.map((x) => `<li>${rich(x)}</li>`).join('')}</ul>` : '<p class="muted small">—</p>';
+}
+
+function select(id, updateHash) {
+  const c = byId[id];
+  if (!c) return;
+  document.querySelectorAll('.node').forEach((el) => el.classList.toggle('selected', el.dataset.id === id));
+  const lane = LANES.find((l) => l.id === c.lane);
+  const flowsHere = FLOWS.filter((f) => f.steps.some(([cid]) => cid === id));
+  $('#inspector').innerHTML = `
+    <div class="insp insp-head">
+      <div class="kicker">${esc(lane.label)}</div>
+      <h3>${esc(c.name)}</h3>
+      <div class="tech">${esc(c.tech)}</div>
+      <p>${rich(c.summary)}</p>
+    </div>
+    <div class="insp">
+      <h4>Files</h4><div class="files">${c.files.map((f) => `<code>${esc(f)}</code>`).join('')}</div>
+      <h4>Facts</h4><table class="facts"><tbody>${c.facts.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${rich(v)}</td></tr>`).join('')}</tbody></table>
+      <h4>Design decisions (why)</h4>${list(c.decisions, 'decision')}
+      <h4>Gotchas</h4>${list(c.gotchas, 'gotcha')}
+      <h4>Alternatives considered</h4>${c.alternatives.map(([n, t]) => `<div class="alt"><b>${esc(n)}</b><span class="small">${rich(t)}</span></div>`).join('')}
+      <h4>Owner Q&amp;A</h4><div class="qa">${c.qa.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${rich(a)}</p></details>`).join('')}</div>
+      ${flowsHere.length ? `<h4>Appears in flows</h4><div class="chips">${flowsHere.map((f) => `<button type="button" class="chip" data-flow-link="${f.id}">${esc(f.label)}</button>`).join('')}</div>` : ''}
+    </div>`;
+  $('#inspector').querySelectorAll('[data-flow-link]').forEach((b) => b.addEventListener('click', () => setFlow(b.dataset.flowLink, true)));
+  $('#inspector').scrollTop = 0;
+  if (updateHash) setHash({ c: id });
+}
+
+// ---------------- Flows ----------------
+let activeFlow = null;
+
+function renderFlowChips() {
+  $('#flowChips').innerHTML = FLOWS.map((f) => `<button type="button" class="chip" aria-pressed="false" data-flow="${f.id}">${esc(f.label)}</button>`).join('') +
+    '<button type="button" class="chip" id="clearFlow">Clear</button>';
+  document.querySelectorAll('[data-flow]').forEach((b) => b.addEventListener('click', () => setFlow(activeFlow === b.dataset.flow ? null : b.dataset.flow, true)));
+  $('#clearFlow').addEventListener('click', () => setFlow(null, true));
+}
+
+function setFlow(id, updateHash) {
+  activeFlow = id && FLOWS.some((f) => f.id === id) ? id : null;
+  const flow = FLOWS.find((f) => f.id === activeFlow);
+  document.querySelectorAll('[data-flow]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.flow === activeFlow)));
+  $('#diagram').classList.toggle('flowing', !!flow);
+  document.querySelectorAll('.node').forEach((el) => {
+    const orders = flow ? flow.steps.map(([cid], i) => (cid === el.dataset.id ? i + 1 : null)).filter(Boolean) : [];
+    el.classList.toggle('in-flow', orders.length > 0);
+    el.querySelector('.badge').textContent = orders.join(',');
+  });
+  const panel = $('#flowPanel');
+  if (flow) {
+    panel.innerHTML = `<h3>${esc(flow.label)}</h3><p class="muted small" style="margin:.2rem 0 0">${esc(flow.desc)}</p>
+      <ol class="flow-steps">${flow.steps.map(([cid, text]) => `<li><div><button type="button" data-step="${cid}">${esc(byId[cid].name)}</button> — <span>${rich(text)}</span></div></li>`).join('')}</ol>`;
+    panel.classList.add('show');
+    panel.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', () => { select(b.dataset.step, true); document.getElementById('atlas').scrollIntoView({ block: 'start' }); }));
+  } else {
+    panel.classList.remove('show');
+    panel.innerHTML = '';
+  }
+  drawFlowPath();
+  if (updateHash) setHash(flow ? { flow: flow.id } : {});
+}
+
+function drawFlowPath() {
+  const path = $('#flowPath');
+  const flow = FLOWS.find((f) => f.id === activeFlow);
+  if (!flow) { path.setAttribute('d', ''); return; }
+  const box = $('#diagram').getBoundingClientRect();
+  const pts = flow.steps.map(([cid]) => {
+    const el = document.querySelector(`.node[data-id="${cid}"]`);
+    const r = el.getBoundingClientRect();
+    return [r.left - box.left + r.width / 2, r.top - box.top + r.height / 2];
+  });
+  // Drop consecutive duplicates (same node twice in a row).
+  const uniq = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1]);
+  path.setAttribute('d', uniq.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' '));
+}
+
+// ---------------- Tables ----------------
+function renderTables() {
+  $('#featureRows').innerHTML = FEATURES.map(([id, f, ph, where]) => `<tr><td><b>${id}</b></td><td>${esc(f)}</td><td>Phase ${ph}</td><td class="small">${esc(where)}</td></tr>`).join('');
+  $('#endpointRows').innerHTML = API_ROWS.map(([id, mp, acc, file, notes]) => `<tr><td><b>${id}</b></td><td><code>${esc(mp)}</code></td><td>${esc(acc)}</td><td><code>${esc(file)}</code></td><td class="small">${esc(notes)}</td></tr>`).join('');
+  $('#tableRows').innerHTML = TABLES.map(([t, cols, why]) => `<tr><td><code>${t}</code></td><td class="small mono">${esc(cols)}</td><td class="small">${esc(why)}</td></tr>`).join('');
+  $('#decisionRows').innerHTML = DECISIONS.map(([r, d, c, w]) => `<tr><td><b>${esc(r)}</b></td><td>${esc(d)}</td><td>${esc(c)}</td><td class="small">${esc(w)}</td></tr>`).join('');
+  $('#stackRows').innerHTML = STACK.map(([t, v, w, why]) => `<tr><td><b>${esc(t)}</b></td><td class="mono small">${esc(v)}</td><td class="small">${esc(w)}</td><td class="small">${esc(why)}</td></tr>`).join('');
+  $('#riskRows').innerHTML = RISKS.map(([s, r, e, m]) => `<tr><td><span class="sev ${s}">${s}</span></td><td><b>${esc(r)}</b></td><td class="small">${rich(e)}</td><td class="small">${rich(m)}</td></tr>`).join('');
+  $('#runbookRows').innerHTML = RUNBOOK.map(([a, cmd, what]) => `<tr><td>${esc(a)}</td><td><code>${esc(cmd)}</code></td><td class="small">${esc(what)}</td></tr>`).join('');
+}
+
+// ---------------- Interview bank ----------------
+let bankCat = 'All';
+function renderBank() {
+  const cats = ['All', ...Object.keys(BANK)];
+  $('#bankCats').innerHTML = cats.map((c) => `<button type="button" class="chip" aria-pressed="${c === bankCat}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  $('#bankCats').querySelectorAll('[data-cat]').forEach((b) => b.addEventListener('click', () => { bankCat = b.dataset.cat; renderBank(); }));
+  const q = $('#bankSearch').value.trim().toLowerCase();
+  const out = [];
+  let total = 0;
+  for (const [cat, items] of Object.entries(BANK)) {
+    if (bankCat !== 'All' && bankCat !== cat) continue;
+    const hits = items.filter(([lvl, qq, a, tags]) => !q || `${lvl} ${qq} ${a} ${tags.join(' ')}`.toLowerCase().includes(q));
+    if (!hits.length) continue;
+    total += hits.length;
+    out.push(`<h3>${esc(cat)} <span class="muted small">(${hits.length})</span></h3>` + hits.map(([lvl, qq, a, tags]) =>
+      `<details><summary><span class="lvl">${lvl}</span>${esc(qq)}</summary><p>${rich(a)}</p><div>${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div></details>`).join(''));
+  }
+  $('#bankList').innerHTML = out.join('') || '<p class="muted">No questions match.</p>';
+  $('#bankList').setAttribute('aria-label', `${total} questions`);
+}
+
+// ---------------- Hash routing & theme ----------------
+function setHash(obj) {
+  const parts = Object.entries(obj).map(([k, v]) => `${k}=${encodeURIComponent(v)}`);
+  history.replaceState(null, '', parts.length ? `#${parts.join('&')}` : location.pathname + location.search);
+}
+function readHash() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  if (params.get('flow')) setFlow(params.get('flow'), false);
+  if (params.get('c')) select(params.get('c'), false);
+}
+
+function initTheme() {
+  const btn = $('#themeBtn');
+  let saved = null;
+  try { saved = localStorage.getItem('atlas.theme'); } catch (e) { /* storage unavailable */ }
+  if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme ||
+      (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('atlas.theme', next); } catch (e) { /* ignore */ }
+  });
+}
+
+// ---------------- Boot ----------------
+renderEndpoints();
+renderLanes();
+renderFlowChips();
+renderTables();
+renderBank();
+initTheme();
+$('#bankSearch').addEventListener('input', renderBank);
+$('#expandAll').addEventListener('click', () => document.querySelectorAll('#bankList details').forEach((d) => (d.open = true)));
+$('#collapseAll').addEventListener('click', () => document.querySelectorAll('#bankList details').forEach((d) => (d.open = false)));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && activeFlow) setFlow(null, true); });
+new ResizeObserver(drawFlowPath).observe($('#diagram'));
+window.addEventListener('hashchange', readHash);
+select('trip-workspace', false);
+readHash();
+</script>
+</body>
+</html>

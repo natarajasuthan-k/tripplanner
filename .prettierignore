@@ -5,3 +5,4 @@ coverage
 apps/api/src/db/migrations
 specs
 *.pptx
+docs/atlas/public

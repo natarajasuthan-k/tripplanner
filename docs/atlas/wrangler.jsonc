@@ -1,0 +1,10 @@
+// Hosts the architecture atlas (a single static page) as its own Worker:
+// https://tripplanner-atlas.natarajasuthan.workers.dev
+// Deploy from the repo root with `pnpm deploy:atlas`. It is separate from the app and API Workers.
+{
+  "name": "tripplanner-atlas",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+  },
+}

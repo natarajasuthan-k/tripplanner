@@ -148,6 +148,12 @@ gpg --decrypt tripplanner-YYYYMMDDTHHMMSSZ.dump.gpg > restore.dump
 pg_restore --clean --if-exists --no-owner --dbname "$BRANCH_DATABASE_URL" restore.dump
 ```
 
+**Architecture atlas.** `docs/atlas/public/tripplanner-architecture.html` is hosted as its own Worker, `tripplanner-atlas`, at https://tripplanner-atlas.natarajasuthan.workers.dev. It is separate from the app and the API, and CI does not deploy it. After editing the page, redeploy it from the repo root:
+
+```bash
+corepack pnpm deploy:atlas
+```
+
 ## Free-plan limits
 
 These were the figures when the specs were written; check them again when you sign up.
