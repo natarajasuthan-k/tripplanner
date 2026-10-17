@@ -71,17 +71,23 @@ describe('Geoapify places (live mode)', () => {
       }),
     );
     const first = await getPlaces(db, liveEnv, dest.id, 30, fetchFn);
+    // Both requests return the same features here; duplicates are merged by name.
     expect(first.items.map((p) => [p.name, p.categoryLabel])).toEqual([
-      ['Fushimi Inari Taisha', 'Sight'],
       ['Kyoto National Museum', 'Museum'],
+      ['Fushimi Inari Taisha', 'Sight'],
     ]);
     expect(first.items[0]!.wikipediaUrl).toBe('https://en.wikipedia.org/wiki/Fushimi_Inari-taisha');
     expect(first.items[0]!.sourceUrl).toBe('https://www.openstreetmap.org/way/123');
 
     await getPlaces(db, liveEnv, dest.id, 30, fetchFn);
-    expect(fetchFn).toHaveBeenCalledTimes(1);
-    const url = new URL(String((fetchFn.mock.calls[0] as unknown[])[0]));
-    expect(url.searchParams.get('filter')).toBe('place:geo-kyoto');
+    expect(fetchFn).toHaveBeenCalledTimes(2); // primary + secondary, then served from cache
+    const urls = fetchFn.mock.calls.map((c) => new URL(String((c as unknown[])[0])));
+    expect(urls.map((u) => u.searchParams.get('filter'))).toEqual([
+      'place:geo-kyoto',
+      'place:geo-kyoto',
+    ]);
+    expect(urls[0]!.searchParams.get('categories')).toContain('tourism.sights');
+    expect(urls[1]!.searchParams.get('categories')).toContain('leisure.park');
   });
 
   it('falls back to stale cache, else PROVIDER_UNAVAILABLE (AC3.3)', async () => {
@@ -102,6 +108,18 @@ describe('Geoapify places (live mode)', () => {
     const stale = await getPlaces(db, liveEnv, dest.id, 30, failing);
     expect(stale.stale).toBe(true);
     expect(stale.items.map((p) => p.name)).toEqual(['Gion']);
+  });
+
+  it('keeps the main results when the secondary request fails', async () => {
+    const dest = await liveDestination();
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const categories = new URL(String(input)).searchParams.get('categories') ?? '';
+      return categories.includes('leisure.park')
+        ? new Response('bad category', { status: 400 })
+        : Response.json({ features: [feature('p1', 'Gion', ['tourism.attraction'])] });
+    });
+    const res = await getPlaces(db, liveEnv, dest.id, 30, fetchFn);
+    expect(res.items.map((p) => p.name)).toEqual(['Gion']);
   });
 
   it('skips places without a name or position', () => {

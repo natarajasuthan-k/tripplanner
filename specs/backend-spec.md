@@ -217,8 +217,8 @@ Used only for the pilot metric (docs/pilot.md). It is never returned by the API.
 ## 6. External Integrations
 | Service | Purpose | API | Free-plan Notes *(check at build time)* |
 |---------|---------|-----|---------------------------------|
-| **Geoapify Autocomplete** | Destination suggestions (F1) | `GET /v1/geocode/autocomplete?text=&type=city&format=json` | About 3,000 credits a day. Results are cached for 7 days per normalised query. The OpenStreetMap credit must be shown. |
-| **Geoapify Places** | Places of interest (F5) | `GET /v2/places?categories=tourism.sights,tourism.attraction,entertainment.museum,leisure.park,heritage&filter=place:<id>&limit=30` | Cached for 7 days per destination, so about one call per destination per week. |
+| **Geoapify Autocomplete** | Destination suggestions (F1) | `GET /v1/geocode/autocomplete?text=&type=city&format=json` | About 3,000 credits a day. Results are cached for 7 days per normalised query. The OpenStreetMap credit must be shown. **Duplicates are merged:** the same name, country and coordinates (to 2 decimal places, about 1 km) count as one city, and the entry with a region is kept (QB11). |
+| **Geoapify Places** | Places of interest (F5) | Two calls, `GET /v2/places?filter=place:<id>&limit=100`, with **main** `categories=entertainment.museum,heritage,tourism.sights,tourism.attraction` and **extra** `categories=beach,religion.place_of_worship,leisure.park`. If the extra call fails, the main results are still returned. | Cached for 7 days per destination. **Ranked** (QB11): places with a Wikipedia/Wikidata entry first, then by category weight (museums, heritage, forts, attractions > beaches > sights > places of worship > parks). Parks, places of worship and memorials are kept only if they have a Wikipedia/Wikidata entry, unless fewer than 10 results would remain. At most 30 are returned. |
 | **Resend** | Organiser-link emails (F10) | `POST /emails` | About 100 a day and 3,000 a month. Needs a verified sending domain, or Resend's test sender while developing. |
 | **Neon** | PostgreSQL | `postgres` driver over TCP, with `sslmode=require` | About 0.5 GB of storage. Waking from idle adds less than about 1s to the first query. |
 | **Cloudflare Workers** | API hosting | — | About 100k requests a day on the free plan. |
@@ -362,6 +362,7 @@ Used only for the pilot metric (docs/pilot.md). It is never returned by the API.
 | QB8 | Several delete requests on one trip | **Keep them all.** The organiser sees every pending request and can Approve (delete) or Dismiss all. |
 | QB9 | Slug after a rename | **Regenerate it; old slugs redirect** (`trip_slug_history`). Live slugs take priority over old ones. |
 | QB10 | Conditional GET for the trip re-fetch | **Yes:** `GET /trips/{token}` returns a weak `ETag` (SHA-256 of the response, first 16 bytes) and answers `304` when `If-None-Match` matches (API contract QA2). |
+| QB11 | How are Geoapify results made useful? (found on live data after the first deploy) | **Rank places of interest and merge duplicate cities.** Neighbourhood parks crowded out major sights (e.g. Chennai), and "Kyoto" was listed twice. See §6. The cache keys are versioned (`ac:v2:`, `places:v2:`) so older cached results are skipped. |
 
 ## 14. Open Questions
 - None at present. URL patterns, request and response shapes, and status codes are defined in `api-contract-spec.md`.

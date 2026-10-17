@@ -1,20 +1,44 @@
-// Geoapify Places — backend-spec §6 (F5). Results are normalised to api-contract §3 "Place".
+// Geoapify Places — backend-spec §6 (F5). Results are normalised to api-contract §3 "Place"
+// and ranked so well-known sights come first (pilot finding: small parks crowded them out).
 import type { Place } from '@tripplanner/shared';
 import { ProviderError } from './geoapify';
 
 const PLACES_URL = 'https://api.geoapify.com/v2/places';
 const TIMEOUT_MS = 3000;
+const FETCH_PER_REQUEST = 100;
+/** Below this many results, unknown parks / places of worship are used to fill the list. */
+const MIN_RESULTS = 10;
 
-/** Requested categories, most specific first; the first match labels the place. */
-export const PLACE_CATEGORIES: [category: string, label: string][] = [
-  ['entertainment.museum', 'Museum'],
-  ['heritage', 'Heritage site'],
-  ['tourism.sights', 'Sight'],
-  ['tourism.attraction', 'Attraction'],
-  ['leisure.park', 'Park'],
+interface CategoryRule {
+  category: string;
+  label: string;
+  weight: number;
+  /** Too numerous to be useful unless notable (has a Wikipedia/Wikidata entry). */
+  needsWiki?: boolean;
+}
+
+/** Most specific first: the first rule matching a place's categories labels and weights it. */
+export const PLACE_RULES: CategoryRule[] = [
+  { category: 'entertainment.museum', label: 'Museum', weight: 5 },
+  { category: 'heritage', label: 'Heritage site', weight: 5 },
+  { category: 'tourism.sights.castle', label: 'Castle', weight: 5 },
+  { category: 'tourism.sights.fort', label: 'Fort', weight: 5 },
+  { category: 'tourism.attraction', label: 'Attraction', weight: 5 },
+  { category: 'tourism.sights.memorial', label: 'Memorial', weight: 1, needsWiki: true },
+  { category: 'tourism.sights', label: 'Sight', weight: 3 },
+  { category: 'beach', label: 'Beach', weight: 4 },
+  { category: 'religion.place_of_worship', label: 'Place of worship', weight: 2, needsWiki: true },
+  { category: 'leisure.park', label: 'Park', weight: 1, needsWiki: true },
 ];
 
-interface GeoapifyPlaceProps {
+/** Main request; a failure here means "suggestions unavailable". */
+const PRIMARY = ['entertainment.museum', 'heritage', 'tourism.sights', 'tourism.attraction'];
+/** Extra request for numerous categories; a failure here only drops these results. */
+const SECONDARY = ['beach', 'religion.place_of_worship', 'leisure.park'];
+
+const WIKI_BOOST = 10;
+
+export interface GeoapifyPlaceProps {
   place_id?: string;
   name?: string;
   categories?: string[];
@@ -23,8 +47,16 @@ interface GeoapifyPlaceProps {
   lat?: number;
   lon?: number;
   website?: string;
-  wiki_and_media?: { wikipedia?: string };
-  datasource?: { raw?: { osm_type?: string; osm_id?: number; description?: string } };
+  wiki_and_media?: { wikipedia?: string; wikidata?: string };
+  datasource?: {
+    raw?: {
+      osm_type?: string;
+      osm_id?: number;
+      description?: string;
+      wikipedia?: string;
+      wikidata?: string;
+    };
+  };
 }
 
 function wikipediaUrl(ref: string | undefined): string | null {
@@ -42,39 +74,86 @@ function osmUrl(raw: GeoapifyPlaceProps['datasource']): string | null {
     : null;
 }
 
+function ruleFor(p: GeoapifyPlaceProps): CategoryRule {
+  return (
+    PLACE_RULES.find((r) =>
+      p.categories?.some((c) => c === r.category || c.startsWith(`${r.category}.`)),
+    ) ?? PLACE_RULES.find((r) => r.category === 'tourism.attraction')!
+  );
+}
+
+function hasWiki(p: GeoapifyPlaceProps): boolean {
+  return Boolean(
+    p.wiki_and_media?.wikipedia ??
+    p.wiki_and_media?.wikidata ??
+    p.datasource?.raw?.wikipedia ??
+    p.datasource?.raw?.wikidata,
+  );
+}
+
 export function mapGeoapifyPlace(p: GeoapifyPlaceProps): Place | null {
   if (!p.place_id || !p.name || typeof p.lat !== 'number' || typeof p.lon !== 'number') {
     return null;
   }
-  const match =
-    PLACE_CATEGORIES.find(([cat]) =>
-      p.categories?.some((c) => c === cat || c.startsWith(`${cat}.`)),
-    ) ?? PLACE_CATEGORIES[3]!;
+  const rule = ruleFor(p);
   return {
     id: `geoapify:${p.place_id}`,
     name: p.name,
-    category: match[0],
-    categoryLabel: match[1],
+    category: rule.category,
+    categoryLabel: rule.label,
     description: p.datasource?.raw?.description?.slice(0, 300) ?? null,
     address: p.address_line2 ?? p.formatted ?? null,
     lat: p.lat,
     lon: p.lon,
     sourceUrl: p.website ?? osmUrl(p.datasource),
-    wikipediaUrl: wikipediaUrl(p.wiki_and_media?.wikipedia),
+    wikipediaUrl: wikipediaUrl(p.wiki_and_media?.wikipedia ?? p.datasource?.raw?.wikipedia),
   };
 }
 
-export async function geoapifyPlaces(
+/**
+ * Score, filter and order raw results: notable (Wikipedia/Wikidata) places first, then by category
+ * weight; numerous categories (parks, places of worship, memorials) only when notable, unless the
+ * list would otherwise be shorter than MIN_RESULTS. Duplicate names are dropped. Stable for ties.
+ */
+export function rankPlaces(raw: GeoapifyPlaceProps[], limit: number): Place[] {
+  const scored = raw
+    .map((p, index) => {
+      const place = mapGeoapifyPlace(p);
+      if (!place) return null;
+      const rule = ruleFor(p);
+      const wiki = hasWiki(p);
+      return { place, index, wiki, rule, score: rule.weight + (wiki ? WIKI_BOOST : 0) };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const seen = new Set<string>();
+  const unique = scored.filter((s) => {
+    const key = s.place.name.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const keep = unique.filter((s) => s.wiki || !s.rule.needsWiki);
+  if (keep.length < MIN_RESULTS) {
+    const fill = unique.filter((s) => !s.wiki && s.rule.needsWiki);
+    keep.push(...fill.slice(0, MIN_RESULTS - keep.length));
+  }
+  return keep.slice(0, limit).map((s) => s.place);
+}
+
+async function fetchCategories(
   apiKey: string,
   providerPlaceId: string,
-  limit: number,
-  fetchFn: typeof fetch = fetch,
-): Promise<Place[]> {
+  categories: string[],
+  fetchFn: typeof fetch,
+): Promise<GeoapifyPlaceProps[]> {
   const url = new URL(PLACES_URL);
   url.search = new URLSearchParams({
-    categories: PLACE_CATEGORIES.map(([c]) => c).join(','),
+    categories: categories.join(','),
     filter: `place:${providerPlaceId}`,
-    limit: String(limit),
+    limit: String(FETCH_PER_REQUEST),
     apiKey,
   }).toString();
 
@@ -85,16 +164,32 @@ export async function geoapifyPlaces(
     throw new ProviderError(`Geoapify places request failed: ${(err as Error).name}`);
   }
   if (!res.ok) throw new ProviderError(`Geoapify places responded ${res.status}`);
-
   const body = (await res.json()) as { features?: { properties?: GeoapifyPlaceProps }[] };
-  const seen = new Set<string>();
-  const out: Place[] = [];
-  for (const f of body.features ?? []) {
-    const place = f.properties ? mapGeoapifyPlace(f.properties) : null;
-    if (place && !seen.has(place.name.toLowerCase())) {
-      seen.add(place.name.toLowerCase());
-      out.push(place);
-    }
+  return (body.features ?? []).flatMap((f) => (f.properties ? [f.properties] : []));
+}
+
+export async function geoapifyPlaces(
+  apiKey: string,
+  providerPlaceId: string,
+  limit: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<Place[]> {
+  const [primary, secondary] = await Promise.allSettled([
+    fetchCategories(apiKey, providerPlaceId, PRIMARY, fetchFn),
+    fetchCategories(apiKey, providerPlaceId, SECONDARY, fetchFn),
+  ]);
+  if (primary.status === 'rejected') throw primary.reason;
+  if (secondary.status === 'rejected') {
+    console.warn(
+      JSON.stringify({
+        level: 'warn',
+        msg: 'secondary places request failed',
+        error: String(secondary.reason),
+      }),
+    );
   }
-  return out;
+  return rankPlaces(
+    [...primary.value, ...(secondary.status === 'fulfilled' ? secondary.value : [])],
+    limit,
+  );
 }

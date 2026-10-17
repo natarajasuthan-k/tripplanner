@@ -28,7 +28,8 @@ export async function searchDestinations(
     results = fakeAutocomplete(normalized, PROVIDER_FETCH_LIMIT);
   } else {
     provider = 'geoapify';
-    const key = `ac:${normalized}`;
+    // v2: results are now de-duplicated per city; the version skips older cached entries.
+    const key = `ac:v2:${normalized}`;
     const cached = await getCached<ProviderDestination[]>(db, key);
     if (cached?.fresh) {
       results = cached.payload;
