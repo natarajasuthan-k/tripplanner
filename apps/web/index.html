@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Never leak trip access codes to external sites (frontend-spec §6). -->
+    <meta name="referrer" content="no-referrer" />
+    <meta name="description" content="Plan trips together — one shared plan, no sign-up." />
+    <title>Trip Planner</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a flash (frontend-spec §8).
+      (function () {
+        var theme = 'system';
+        try {
+          theme = localStorage.getItem('tp.theme') || 'system';
+        } catch (e) {}
+        var dark =
+          theme === 'dark' ||
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

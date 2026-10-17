@@ -1,0 +1,20 @@
+# Local Postgres for development and integration tests (backend-spec §12, env "local").
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: trip
+      POSTGRES_PASSWORD: trip
+      POSTGRES_DB: tripplanner
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U trip -d tripplanner']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:

@@ -1,0 +1,6 @@
+# Copy to .dev.vars for `wrangler dev` (git-ignored). Backend-spec §9.
+DATABASE_URL=postgres://trip:trip@localhost:5432/tripplanner
+GEOAPIFY_API_KEY=replace-me
+RESEND_API_KEY=replace-me
+# 32+ random bytes, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
+EMAIL_HMAC_SECRET=replace-me-with-32-plus-random-bytes
